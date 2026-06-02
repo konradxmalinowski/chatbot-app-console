@@ -1,10 +1,11 @@
 import os
-
 from dotenv import load_dotenv
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
+from langchain_core.runnables import RunnableConfig
 from langchain_google_genai import ChatGoogleGenerativeAI
-
+from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from constants import SYSTEM_PROMPT
 
 load_dotenv(verbose=True)
@@ -19,30 +20,55 @@ llm = ChatGoogleGenerativeAI(
 
 parser = StrOutputParser()
 
-def chat_with_llm(user_prompt: PromptTemplate):
-    chat_template_prompt = ChatPromptTemplate([
-        ("system", SYSTEM_PROMPT),
-        ("user", user_prompt.format()),
-    ])
-    chain = chat_template_prompt | llm | parser
-    response = chain.invoke({})
-    print(response)
+chat_template_prompt = ChatPromptTemplate([
+    ("system", SYSTEM_PROMPT),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("human", "{input}"),
+])
+
+base_chain = chat_template_prompt | llm | parser
+
+history_state = {}
+
+def get_session_history(session_id: str):
+    if session_id not in history_state:
+        history_state[session_id] = InMemoryChatMessageHistory()
+    return history_state[session_id]
+
+conversation_chain = RunnableWithMessageHistory(
+    runnable=base_chain,
+    get_session_history=get_session_history,
+    input_messages_key="input",
+    history_messages_key="chat_history",
+)
+
+def chat_with_llm(user_prompt: str):
+    config = RunnableConfig({"configurable": {"session_id": "1"}})
+
+    response = conversation_chain.invoke(
+        {"input": user_prompt},
+        config=config
+    )
+
+    print("=== HISTORY ===")
+    print(get_session_history("1").messages)
+    print("================")
+
+    print(f"AI: {response}")
 
 def main():
     print("Welcome! We introduce chatbot-app v.0!")
 
-    is_running = True
+    while True:
+        user_prompt = input("You: ")
 
-    user_prompt = PromptTemplate.from_template(input("How can i help u?: "))
-    chat_with_llm(user_prompt)
+        if not user_prompt.strip():
+            break
 
-    while is_running:
-        user_prompt = PromptTemplate.from_template(input("Your answer: "))
-
-        if user_prompt.format() == "":
-            is_running = False
-
-        chat_with_llm(user_prompt)
+        try:
+            chat_with_llm(user_prompt)
+        except Exception as e:
+            print(f"Error: {e}")
 
 if __name__ == "__main__":
     main()
