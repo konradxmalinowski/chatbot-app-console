@@ -50,10 +50,6 @@ def chat_with_llm(user_prompt: str):
         config=config
     )
 
-    print("=== HISTORY ===")
-    print(get_session_history("1").messages)
-    print("================")
-
     print(f"AI: {response}")
 
 def main():
