@@ -1,5 +1,8 @@
+from pathlib import Path
+
 DEFAULT_SESSION_ID = "1"
 MAX_INPUT_LENGTH = 2000
+SESSIONS_DIR = Path("sessions")
 
 SYSTEM_PROMPT = """
 # ROLE (Rola)

@@ -12,7 +12,8 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from constants import DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, SYSTEM_PROMPT
+from constants import DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, SESSIONS_DIR, SYSTEM_PROMPT
+from session_store import load_session, save_session
 
 logging.basicConfig(level=logging.ERROR, format="%(levelname)s: %(message)s")
 
@@ -93,6 +94,14 @@ def build_chain(model_override: str | None = None):
 
     history_state: dict[str, InMemoryChatMessageHistory] = {}
 
+    # Restore previous session if one exists
+    prior_messages = load_session(DEFAULT_SESSION_ID, SESSIONS_DIR)
+    if prior_messages:
+        restored = InMemoryChatMessageHistory()
+        restored.add_messages(prior_messages)
+        history_state[DEFAULT_SESSION_ID] = restored
+        print(f"Resumed session with {len(prior_messages)} previous messages.")
+
     def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
         if session_id not in history_state:
             history_state[session_id] = InMemoryChatMessageHistory()
@@ -142,7 +151,7 @@ def main():
     )
     args = parser.parse_args()
 
-    conversation_chain, _ = build_chain(model_override=args.model)
+    conversation_chain, history_state = build_chain(model_override=args.model)
 
     print("Welcome! We introduce chatbot-app v.0!")
 
@@ -161,6 +170,11 @@ def main():
 
         print("AI: ", end="", flush=True)
         chat_with_llm(conversation_chain, user_prompt)
+
+    history = history_state.get(DEFAULT_SESSION_ID)
+    if history is not None:
+        save_session(DEFAULT_SESSION_ID, history.get_messages(), SESSIONS_DIR)
+        print("Session saved.")
 
 
 if __name__ == "__main__":
