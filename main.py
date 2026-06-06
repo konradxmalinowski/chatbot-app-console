@@ -11,11 +11,14 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_google_genai import ChatGoogleGenerativeAI
+from rich.console import Console
 
 from constants import DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, SESSIONS_DIR, SYSTEM_PROMPT
 from session_store import load_session, save_session
 
 logging.basicConfig(level=logging.ERROR, format="%(levelname)s: %(message)s")
+
+console = Console()
 
 _PLACEHOLDER_MARKERS = [
     "[NAZWA FIRMY",
@@ -36,9 +39,9 @@ def _validate_env() -> tuple[str, str]:
     env_model = os.environ.get("GEMINI_LLM_MODEL", "").strip()
 
     if not api_key:
-        print(
-            "Missing required env var: GEMINI_API_KEY. "
-            "Copy .env.example to .env and fill in your key."
+        console.print(
+            "[red]Missing required env var: GEMINI_API_KEY. "
+            "Copy .env.example to .env and fill in your key.[/]"
         )
         sys.exit(1)
 
@@ -49,8 +52,8 @@ def _check_system_prompt_placeholders() -> None:
     """Warn if SYSTEM_PROMPT still contains unfilled template placeholders."""
     found = [marker for marker in _PLACEHOLDER_MARKERS if marker in SYSTEM_PROMPT]
     if found:
-        print(
-            "Warning: SYSTEM_PROMPT contains unfilled placeholders: "
+        console.print(
+            "[yellow]Warning:[/] SYSTEM_PROMPT contains unfilled placeholders: "
             + ", ".join(found)
             + ". Customize constants.py before deploying."
         )
@@ -72,9 +75,9 @@ def build_chain(model_override: str | None = None):
 
     llm_model = model_override or env_model
     if not llm_model:
-        print(
-            "No model specified. Set GEMINI_LLM_MODEL in .env "
-            "or pass --model <model-name> on the command line."
+        console.print(
+            "[red]No model specified. Set GEMINI_LLM_MODEL in .env "
+            "or pass --model <model-name> on the command line.[/]"
         )
         sys.exit(1)
 
@@ -100,7 +103,9 @@ def build_chain(model_override: str | None = None):
         restored = InMemoryChatMessageHistory()
         restored.add_messages(prior_messages)
         history_state[DEFAULT_SESSION_ID] = restored
-        print(f"Resumed session with {len(prior_messages)} previous messages.")
+        console.print(
+            f"[dim]Resumed session with {len(prior_messages)} previous messages.[/]"
+        )
 
     def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
         if session_id not in history_state:
@@ -130,12 +135,15 @@ def chat_with_llm(conversation_chain, user_prompt: str) -> str:
         return "".join(response_parts)
     except PermissionDenied:
         logging.error("API key invalid or quota exceeded.")
+        console.print("[red]Error:[/] API key invalid or quota exceeded.")
         return ""
     except GoogleAPIError:
         logging.error("Network error — check your connection.")
+        console.print("[red]Error:[/] Network error — check your connection.")
         return ""
     except Exception as exc:
         logging.error("Unexpected error: %s", exc)
+        console.print(f"[red]Error:[/] Unexpected error: {exc}")
         return ""
 
 
@@ -153,28 +161,29 @@ def main():
 
     conversation_chain, history_state = build_chain(model_override=args.model)
 
-    print("Welcome! We introduce chatbot-app v.0!")
+    console.rule("[bold]chatbot-app[/]")
 
     while True:
-        user_prompt = input("You: ")
+        console.print("[bold green]You:[/] ", end="")
+        user_prompt = input("")
 
         if not user_prompt.strip():
             break
 
         if len(user_prompt) > MAX_INPUT_LENGTH:
-            print(
-                f"Warning: input exceeds {MAX_INPUT_LENGTH} characters. "
+            console.print(
+                f"[yellow]Warning:[/] input exceeds {MAX_INPUT_LENGTH} characters. "
                 "Please shorten your message and try again."
             )
             continue
 
-        print("AI: ", end="", flush=True)
+        console.print("[bold cyan]AI:[/] ", end="")
         chat_with_llm(conversation_chain, user_prompt)
 
     history = history_state.get(DEFAULT_SESSION_ID)
     if history is not None:
         save_session(DEFAULT_SESSION_ID, history.get_messages(), SESSIONS_DIR)
-        print("Session saved.")
+        console.print("[dim]Session saved.[/]")
 
 
 if __name__ == "__main__":
