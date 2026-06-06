@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 import sys
@@ -24,9 +25,14 @@ _PLACEHOLDER_MARKERS = [
 
 
 def _validate_env() -> tuple[str, str]:
-    """Read and validate required environment variables. Exits on failure."""
+    """Read and validate required environment variables.
+
+    Returns (api_key, env_model). env_model may be an empty string when the
+    caller intends to supply a model override.  Exits immediately if GEMINI_API_KEY
+    is absent.
+    """
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-    llm_model = os.environ.get("GEMINI_LLM_MODEL", "").strip()
+    env_model = os.environ.get("GEMINI_LLM_MODEL", "").strip()
 
     if not api_key:
         print(
@@ -35,14 +41,7 @@ def _validate_env() -> tuple[str, str]:
         )
         sys.exit(1)
 
-    if not llm_model:
-        print(
-            "Missing required env var: GEMINI_LLM_MODEL. "
-            "Copy .env.example to .env and set the model name (e.g. gemini-2.5-flash)."
-        )
-        sys.exit(1)
-
-    return api_key, llm_model
+    return api_key, env_model
 
 
 def _check_system_prompt_placeholders() -> None:
@@ -56,12 +55,27 @@ def _check_system_prompt_placeholders() -> None:
         )
 
 
-def build_chain():
-    """Build and return (conversation_chain, history_state)."""
+def build_chain(model_override: str | None = None):
+    """Build and return (conversation_chain, history_state).
+
+    Parameters
+    ----------
+    model_override:
+        When supplied (e.g. via --model), takes precedence over the
+        GEMINI_LLM_MODEL environment variable.
+    """
     load_dotenv()
 
-    api_key, llm_model = _validate_env()
+    api_key, env_model = _validate_env()
     _check_system_prompt_placeholders()
+
+    llm_model = model_override or env_model
+    if not llm_model:
+        print(
+            "No model specified. Set GEMINI_LLM_MODEL in .env "
+            "or pass --model <model-name> on the command line."
+        )
+        sys.exit(1)
 
     llm = ChatGoogleGenerativeAI(model=llm_model, google_api_key=api_key)
 
@@ -117,7 +131,18 @@ def chat_with_llm(conversation_chain, user_prompt: str) -> str:
 
 
 def main():
-    conversation_chain, _ = build_chain()
+    parser = argparse.ArgumentParser(
+        description="chatbot-app — LangChain + Gemini CLI chatbot"
+    )
+    parser.add_argument(
+        "--model",
+        metavar="MODEL",
+        default=None,
+        help="Gemini model name to use (overrides GEMINI_LLM_MODEL env var)",
+    )
+    args = parser.parse_args()
+
+    conversation_chain, _ = build_chain(model_override=args.model)
 
     print("Welcome! We introduce chatbot-app v.0!")
 
