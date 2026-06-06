@@ -12,6 +12,7 @@ Educational CLI chatbot using LangChain + Google Gemini (`gemini-2.5-flash`). Si
 python -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+pip install -r requirements-dev.txt   # dev tools: ruff, pytest
 cp .env.example .env            # then fill in GEMINI_API_KEY
 ```
 
@@ -50,4 +51,4 @@ ruff format .        # format
 
 ## No tests
 
-There is no test suite yet. When adding tests, use pytest.
+There is no test suite yet. When adding tests, use pytest (installed via `requirements-dev.txt`).
