@@ -18,7 +18,7 @@
 
 **Status:** Pending
 
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 **Deliverables:**
 
@@ -46,8 +46,8 @@
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Git tracking cleanup: untrack __pycache__ and plans/, expand .gitignore (REQ-01, REQ-02, REQ-06)
-- [ ] 01-02-PLAN.md — Security hardening: pin rich, pre-commit hook, .env.example warning, history audit (REQ-03, REQ-04, REQ-07, REQ-08)
+- [x] 01-01-PLAN.md — Git tracking cleanup: untrack __pycache__ and plans/, expand .gitignore (REQ-01, REQ-02, REQ-06)
+- [x] 01-02-PLAN.md — Security hardening: pin rich, pre-commit hook, .env.example warning, history audit (REQ-03, REQ-04, REQ-07, REQ-08)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
