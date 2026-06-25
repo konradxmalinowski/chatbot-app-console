@@ -21,6 +21,7 @@
 **Plans:** 3 plans
 
 **Deliverables:**
+
 - Updated `.gitignore` covering all dev/internal artifacts
 - `__pycache__` and `.pyc` files removed from git tracking
 - `plans/` and `.planning/` directories excluded from public repo
@@ -31,6 +32,7 @@
 - Clean `git log` with no dev-only artifacts tracked
 
 **Requirements:**
+
 - REQ-01: Remove all `__pycache__` and `.pyc` files from git tracking
 - REQ-02: Update `.gitignore` to exclude dev/IDE/internal files (`.idea/`, `plans/`, `.planning/`, `sessions/`)
 - REQ-03: Add safeguard against committing `.env` (pre-commit hook or documentation)
@@ -41,8 +43,12 @@
 - REQ-08: Ensure `.env.example` is complete and accurate
 
 **Depends on:** (none)
-
 Plans:
+**Wave 1**
+
 - [ ] 01-01-PLAN.md — Git tracking cleanup: untrack __pycache__ and plans/, expand .gitignore (REQ-01, REQ-02, REQ-06)
 - [ ] 01-02-PLAN.md — Security hardening: pin rich, pre-commit hook, .env.example warning, history audit (REQ-03, REQ-04, REQ-07, REQ-08)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 01-03-PLAN.md — Professional README.md in English (REQ-05)
