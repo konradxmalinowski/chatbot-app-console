@@ -9,3 +9,12 @@ dist/
 build/
 *.egg-info/
 sessions/
+
+# IDE config
+.idea/
+
+# Internal planning notes (raw developer notes; .planning/ stays tracked per D-06)
+plans/
+
+# Ruff cache
+.ruff_cache/
