@@ -10,6 +10,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from rich.console import Console
 
+from agent.graph import AgentGraph
 from chain_builder import build_base_chain, build_llm
 from constants import (
     DEFAULT_SESSION_ID,
@@ -169,6 +170,94 @@ def chat_with_llm(conversation_chain, user_prompt: str) -> str:
         return ""
 
 
+def run_agent_turn(agent_graph: AgentGraph, session_id: str, user_prompt: str) -> None:
+    """Drive one full user turn through the LangGraph agent, prompting for
+    synchronous ``[y/N]`` approval every time the graph pauses before a tool call.
+
+    A single turn may involve several tool calls in sequence (approve/reject,
+    resume, possibly pause again on another tool) before the graph finally
+    produces a plain-text response with no further pending tool calls.
+
+    Deviation from ``chat_with_llm``: this prints the final response in one shot
+    rather than streaming token-by-token. Streaming a LangGraph run interleaved
+    with synchronous ``input()`` prompts for tool approval adds real complexity
+    for no user-visible benefit in a CLI already dominated by human wait time, so
+    plain print is used here instead — see the phase 4 implementation note.
+    """
+    try:
+        agent_graph.start_turn(session_id, user_prompt)
+    except PermissionDenied:
+        logging.error("API key invalid or quota exceeded.")
+        console.print("[red]Error:[/] API key invalid or quota exceeded.")
+        return
+    except GoogleAPIError:
+        logging.error("Network error — check your connection.")
+        console.print("[red]Error:[/] Network error — check your connection.")
+        return
+    except Exception as exc:
+        logging.error("Unexpected error: %s", exc)
+        console.print(f"[red]Error:[/] Unexpected error: {exc}")
+        return
+
+    while agent_graph.has_pending_approval(session_id):
+        pending_calls = agent_graph.get_pending_tool_calls(session_id)
+        if not pending_calls:
+            break
+
+        # Show every proposed call, not just one: the LLM can propose several in
+        # a single turn (parallel tool calling), and approving/rejecting is
+        # all-or-nothing for the whole batch — the user must see everything
+        # they're approving, not just a representative first call.
+        console.print("[yellow]Agent wants to call:[/]")
+        for pending in pending_calls:
+            console.print(f"  [bold]{pending.name}[/]  args={pending.args}")
+        prompt = (
+            "Approve tool call? [y/N]: "
+            if len(pending_calls) == 1
+            else "Approve all of the above tool calls? [y/N]: "
+        )
+        decision = input(prompt).strip().lower()
+
+        try:
+            if decision == "y":
+                agent_graph.resume_approved(session_id, approved_by="cli-user")
+            else:
+                agent_graph.resume_rejected(session_id, approved_by="cli-user")
+        except PermissionDenied:
+            logging.error("API key invalid or quota exceeded.")
+            console.print("[red]Error:[/] API key invalid or quota exceeded.")
+            return
+        except GoogleAPIError:
+            logging.error("Network error — check your connection.")
+            console.print("[red]Error:[/] Network error — check your connection.")
+            return
+        except Exception as exc:
+            logging.error("Unexpected error: %s", exc)
+            console.print(f"[red]Error:[/] Unexpected error: {exc}")
+            return
+
+    response = agent_graph.get_final_response(session_id)
+    console.print(f"[bold cyan]AI:[/] {response}")
+
+
+def build_agent_graph(model_override: str | None = None) -> AgentGraph:
+    """Build the LangGraph agent used by ``--agent`` CLI mode."""
+    load_dotenv()
+    api_key, env_model = _validate_env()
+    _check_system_prompt_placeholders()
+
+    llm_model = model_override or env_model
+    if not llm_model:
+        console.print(
+            "[red]No model specified. Set GEMINI_LLM_MODEL in .env "
+            "or pass --model <model-name> on the command line.[/]"
+        )
+        sys.exit(1)
+
+    llm = build_llm(api_key, llm_model)
+    return AgentGraph(llm)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="chatbot-app — LangChain + Gemini CLI chatbot"
@@ -187,7 +276,44 @@ def main():
             "Falls back to normal mode with a warning if docs/ has no usable content."
         ),
     )
+    parser.add_argument(
+        "--agent",
+        action="store_true",
+        help=(
+            "Run in LangGraph agent mode with tools (web search, calculator, "
+            "document reader) and a synchronous [y/N] approval prompt before "
+            "every tool call. Cannot be combined with --rag."
+        ),
+    )
     args = parser.parse_args()
+
+    if args.agent and args.rag:
+        console.print(
+            "[red]--agent and --rag cannot be combined in this version.[/] "
+            "The agent has its own docs/-scoped read_doc tool instead."
+        )
+        sys.exit(1)
+
+    if args.agent:
+        agent_graph = build_agent_graph(model_override=args.model)
+        console.rule("[bold]chatbot-app (agent mode)[/]")
+
+        while True:
+            console.print("[bold green]You:[/] ", end="")
+            user_prompt = input("")
+
+            if not user_prompt.strip():
+                break
+
+            if len(user_prompt) > MAX_INPUT_LENGTH:
+                console.print(
+                    f"[yellow]Warning:[/] input exceeds {MAX_INPUT_LENGTH} "
+                    "characters. Please shorten your message and try again."
+                )
+                continue
+
+            run_agent_turn(agent_graph, DEFAULT_SESSION_ID, user_prompt)
+        return
 
     conversation_chain, history_state = build_chain(
         model_override=args.model, rag_enabled=args.rag

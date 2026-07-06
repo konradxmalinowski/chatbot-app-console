@@ -21,6 +21,7 @@
 - [Usage](#usage)
 - [RAG Pipeline](#rag-pipeline)
 - [REST API](#rest-api)
+- [LangGraph Agent](#langgraph-agent)
 - [Customizing the System Prompt](#customizing-the-system-prompt)
 - [Project Structure](#project-structure)
 - [Development](#development)
@@ -43,6 +44,7 @@
 - **Startup checks** — fails fast with descriptive errors when `GEMINI_API_KEY` is missing or `SYSTEM_PROMPT` still contains unfilled placeholders
 - **Retrieval-augmented generation** — optional `--rag` mode answers questions grounded in local documents (`.pdf`, `.txt`, `.md`) with source citations, backed by a local ChromaDB vector store
 - **REST API** — the same chat/RAG functionality exposed over HTTP via FastAPI, with JWT auth, per-token rate limiting, and Swagger docs
+- **Agent with tools** — optional `--agent` mode adds web search, a calculator, and a document reader behind a mandatory human-in-the-loop approval gate (CLI `[y/N]` prompt, or a two-step approve/reject flow over the API)
 
 ---
 
@@ -103,9 +105,12 @@ python main.py --model gemini-1.5-pro
 
 # Enable RAG mode — answers are grounded in docs/, with source citations
 python main.py --rag
+
+# Enable agent mode — tools with a [y/N] approval prompt before every call
+python main.py --agent
 ```
 
-Exit the chat by submitting an empty line (press Enter on a blank prompt).
+Exit the chat by submitting an empty line (press Enter on a blank prompt). `--agent` and `--rag` cannot be combined.
 
 ---
 
@@ -157,6 +162,32 @@ curl -X POST localhost:8000/chat \
 
 ---
 
+## LangGraph Agent
+
+`--agent` (CLI) and `POST /agent` (API) run a LangGraph agent with three tools — web search (DuckDuckGo, no API key), a calculator (safe, no `eval`), and a document reader scoped to `docs/` — behind a **mandatory** human-in-the-loop approval gate: no tool ever runs without explicit approval.
+
+- **CLI** — when the agent wants to use a tool, it prints the proposed call(s) and prompts `Approve tool call? [y/N]:` before running anything.
+- **API** — a two-step flow, since there's no terminal to prompt in:
+  1. `POST /agent` `{"message": str, "session_id": str}` runs the agent. If it wants to call a tool, the response is `{"status": "pending_approval", "pending_id": str, "pending_tool_calls": [{"tool": str, "args": dict}, ...]}` — every proposed call, not just one.
+  2. `POST /agent/{pending_id}/approve` executes the pending call(s) and continues (may pause again on a further tool call, or return `{"status": "complete", "response": str}`).
+  3. `POST /agent/{pending_id}/reject` declines instead — the agent acknowledges it can't complete that step rather than retrying.
+- **Logging** — every tool-call attempt (approved or declined) is appended to `logs/agent.jsonl` (git-ignored).
+- **Safety** — the calculator can't execute arbitrary code (AST-based, not `eval`/`exec`) and rejects expressions whose result would be too large to compute cheaply; the document reader can't read outside `docs/`.
+
+Example (API):
+
+```bash
+PENDING=$(curl -s -X POST localhost:8000/agent \
+  -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+  -d '{"message":"What is 47 times 89?","session_id":"my-session"}')
+echo "$PENDING"   # {"status":"pending_approval","pending_id":"my-session",...}
+
+curl -X POST localhost:8000/agent/my-session/approve \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
 ## Customizing the System Prompt
 
 `constants.py` contains `SYSTEM_PROMPT` — a chatbot persona template with bracketed placeholders such as `[NAZWA FIRMY / PROJEKTU]` and `[GŁÓWNY CEL BOTA]`. Replace every `[...]` placeholder with your project's name, goal, contact information, and topic scope before deploying for any specific use case. The startup check will refuse to run if any placeholder remains unfilled.
@@ -169,8 +200,9 @@ curl -X POST localhost:8000/chat \
 chatbot-app/
 ├── main.py               # CLI entry point — chat loop, session wiring
 ├── api/                  # REST API entry point: FastAPI app, JWT auth, rate limiting
+├── agent/                # LangGraph agent: tools (web search, calculator, read_doc), graph
 ├── chain_builder.py      # LCEL chain construction shared by main.py and api/
-├── constants.py          # SYSTEM_PROMPT, DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, RAG constants
+├── constants.py          # SYSTEM_PROMPT, DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, RAG/agent constants
 ├── session_store.py      # JSON session persistence utilities
 ├── rag/                  # RAG pipeline: loader, chunker, embeddings, store, retriever, bootstrap
 ├── requirements.txt      # Pinned runtime dependencies
@@ -178,6 +210,7 @@ chatbot-app/
 ├── .env.example          # Environment variable template (safe to commit)
 ├── docs/                 # RAG corpus — .pdf/.txt/.md documents indexed by --rag
 ├── chroma_db/            # ChromaDB persistence (git-ignored, created on first --rag run)
+├── logs/                 # Agent tool-call logs (git-ignored, created on first --agent run)
 └── sessions/             # Runtime session files (git-ignored)
 ```
 

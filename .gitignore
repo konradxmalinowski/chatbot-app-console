@@ -10,6 +10,7 @@ build/
 *.egg-info/
 sessions/
 chroma_db/
+logs/
 
 # IDE config
 .idea/

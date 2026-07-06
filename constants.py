@@ -9,6 +9,27 @@ DOCS_DIR = Path("docs")
 CHROMA_PERSIST_DIR = Path("chroma_db")
 RAG_TOP_K = 3
 
+# Agent with tools (Phase 4)
+LOGS_DIR = Path("logs")
+AGENT_LOG_FILE = "agent.jsonl"
+
+# Appended to SYSTEM_PROMPT (never replaces it) when --agent is enabled. Instructs
+# the model to use tools one at a time and to accept a declined tool call gracefully
+# instead of silently retrying it.
+AGENT_SYSTEM_PROMPT_SUFFIX = """
+
+# AGENT MODE (Tools)
+You have access to tools: web search, a calculator, and a document reader scoped to
+a local docs folder. Follow these rules:
+1. Call at most one tool per turn, then wait for its result before deciding what to
+   do next.
+2. Every tool call requires explicit human approval before it runs. If a tool call
+   is declined, do not retry that same tool call again in this turn or the next —
+   instead, tell the user plainly that you were unable to complete that step (and,
+   if reasonable, suggest an alternative that does not require the declined tool).
+3. Never fabricate a tool result. Only report what a tool actually returned.
+"""
+
 # Appended to SYSTEM_PROMPT (never replaces it) when --rag is enabled. Instructs the
 # model to cite retrieved sources and to admit uncertainty instead of inventing one.
 RAG_SYSTEM_PROMPT_SUFFIX = """

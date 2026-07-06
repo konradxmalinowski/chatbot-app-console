@@ -20,7 +20,9 @@ from dotenv import load_dotenv
 # loaded automatically otherwise, matching main.py's own load_dotenv() call).
 load_dotenv()
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, status  # noqa: E402
+from typing import Annotated  # noqa: E402
+
+from fastapi import Depends, FastAPI, HTTPException, Path, Request, Response, status  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from google.api_core.exceptions import GoogleAPIError, PermissionDenied  # noqa: E402
 from langchain_core.chat_history import InMemoryChatMessageHistory  # noqa: E402
@@ -31,13 +33,19 @@ from slowapi import _rate_limit_exceeded_handler  # noqa: E402
 from slowapi.errors import RateLimitExceeded  # noqa: E402
 from slowapi.middleware import SlowAPIMiddleware  # noqa: E402
 
+from agent.graph import AgentGraph  # noqa: E402
 from api.auth import verify_token  # noqa: E402
 from api.auth import router as auth_router  # noqa: E402
 from api.models import (  # noqa: E402
+    AgentCompleteResponse,
+    AgentPendingResponse,
+    AgentRequest,
     ChatRequest,
     ChatResponse,
     HealthResponse,
+    PendingToolCallModel,
     RagChatResponse,
+    SESSION_ID_PATTERN,
     SourceCitation,
 )
 from api.rate_limit import limiter  # noqa: E402
@@ -62,7 +70,13 @@ _state: dict = {
     "non_rag_chain": None,
     "rag_chain": None,
     "history": {},
+    "agent_graph": None,
 }
+
+# Path-parameter type for pending_id (Phase 4 /agent/{pending_id}/... routes):
+# reuses ChatRequest's session_id validation pattern, since pending_id IS the
+# session_id (a session has at most one outstanding approval at a time).
+SessionIdPath = Annotated[str, Path(pattern=SESSION_ID_PATTERN)]
 
 
 def _validate_env() -> tuple[str, str]:
@@ -147,6 +161,59 @@ def _invoke_chain_safely(chain, chain_input: dict, session_id: str) -> str:
         ) from None
 
 
+def _run_agent_step_safely(step_fn, *args, **kwargs) -> None:
+    """Run one AgentGraph step (start_turn/resume_approved/resume_rejected),
+    mapping Gemini/network/tool failures to clean HTTP errors — mirrors
+    ``_invoke_chain_safely``'s exception mapping so a tool exception or an
+    upstream LLM failure during an agent turn never becomes a raw 500 with a
+    stack trace in the response body.
+    """
+    try:
+        step_fn(*args, **kwargs)
+    except PermissionDenied:
+        logger.error("Gemini API key invalid or quota exceeded.")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream LLM authentication or quota error.",
+        ) from None
+    except GoogleAPIError:
+        logger.error("Gemini API network error.")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream LLM network error.",
+        ) from None
+    except ChatGoogleGenerativeAIError as exc:
+        logger.error("Gemini API error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream LLM error — the model provider rejected the request.",
+        ) from None
+    except Exception:
+        logger.exception("Unexpected error during agent turn.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error.",
+        ) from None
+
+
+def _agent_status_response(
+    agent_graph: AgentGraph, session_id: str
+) -> AgentPendingResponse | AgentCompleteResponse:
+    """Build the appropriate response shape from the agent graph's current state:
+    still paused on a tool-call approval, or finished with a plain-text answer.
+    """
+    pending_calls = agent_graph.get_pending_tool_calls(session_id)
+    if pending_calls:
+        return AgentPendingResponse(
+            pending_id=session_id,
+            pending_tool_calls=[
+                PendingToolCallModel(tool=call.name, args=call.args)
+                for call in pending_calls
+            ],
+        )
+    return AgentCompleteResponse(response=agent_graph.get_final_response(session_id))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     api_key, model = _validate_env()
@@ -178,6 +245,12 @@ async def lifespan(app: FastAPI):
     else:
         _state["rag_chain"] = None
 
+    # Agent (Phase 4): one AgentGraph instance for the process lifetime, matching
+    # non_rag_chain/rag_chain above. Its MemorySaver checkpointer partitions state
+    # per session_id (used as the LangGraph thread_id) internally, so a single
+    # instance safely serves every session.
+    _state["agent_graph"] = AgentGraph(llm)
+
     logger.info(
         "API startup complete. Vector store: %s",
         "ready" if rag_store is not None else "not_initialized",
@@ -186,6 +259,7 @@ async def lifespan(app: FastAPI):
     _state["non_rag_chain"] = None
     _state["rag_chain"] = None
     _state["rag_store"] = None
+    _state["agent_graph"] = None
 
 
 app = FastAPI(title="chatbot-app API", lifespan=lifespan)
@@ -296,3 +370,100 @@ def health() -> HealthResponse:
         "ready" if _state["rag_store"] is not None else "not_initialized"
     )
     return HealthResponse(status="ok", vector_store=vector_store_status)
+
+
+# Known, pre-existing limitation shared with /chat and /chat/rag (not new to
+# these routes): verify_token authenticates a single shared service-to-service
+# secret (see api/auth.py), not a per-user identity, so it cannot bind a caller
+# to "their" session_id/pending_id. Any valid token holder can already read/write
+# any /chat session_id today; the same is true here for pending_id. Fixing this
+# would mean adding a real per-user identity/ownership model across the whole
+# API, which is out of scope for this phase — flagged here for visibility, not
+# solved locally.
+@app.post("/agent", response_model=AgentPendingResponse | AgentCompleteResponse)
+def agent_turn(
+    request: Request,
+    response: Response,
+    body: AgentRequest,
+    token: str = Depends(verify_token),
+) -> AgentPendingResponse | AgentCompleteResponse:
+    """Start (or continue) an agent turn. Runs the LangGraph agent until it either
+    finishes or pauses right before a tool call, awaiting approval.
+
+    No @limiter.limit(...) decorator here either — see chat()'s comment above:
+    default_limits + SlowAPIMiddleware is what actually rate-limits this route,
+    including requests that fail Depends(verify_token).
+    """
+    agent_graph: AgentGraph = _state["agent_graph"]
+
+    # A session can only have one outstanding approval at a time (see module
+    # docstring / pending_id design). If one is already pending, starting a new
+    # turn on top of it would silently orphan the first pending tool call — it
+    # would never get approved or rejected, and the conversation history would
+    # be left with a tool_call the model never received a response for. Instead,
+    # just hand back the existing pending approval unchanged; the caller must
+    # resolve it via approve/reject before a new message can be sent.
+    if agent_graph.has_pending_approval(body.session_id):
+        return _agent_status_response(agent_graph, body.session_id)
+
+    _run_agent_step_safely(agent_graph.start_turn, body.session_id, body.message)
+    return _agent_status_response(agent_graph, body.session_id)
+
+
+@app.post(
+    "/agent/{pending_id}/approve",
+    response_model=AgentPendingResponse | AgentCompleteResponse,
+)
+def agent_approve(
+    request: Request,
+    response: Response,
+    pending_id: SessionIdPath,
+    token: str = Depends(verify_token),
+) -> AgentPendingResponse | AgentCompleteResponse:
+    """Approve the pending tool call for this session: the tool actually executes,
+    then the graph continues (and may pause again on a further tool call).
+
+    This is the real equivalent of the CLI's `[y/N]` gate answered `y` — there is
+    no way to reach tool execution over the API except through this endpoint.
+    """
+    agent_graph: AgentGraph = _state["agent_graph"]
+    if not agent_graph.has_pending_approval(pending_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                "No pending tool approval for this session (it may never have "
+                "started, already been resolved, or the server restarted since "
+                "it was created)."
+            ),
+        )
+    _run_agent_step_safely(agent_graph.resume_approved, pending_id, "api-client")
+    return _agent_status_response(agent_graph, pending_id)
+
+
+@app.post(
+    "/agent/{pending_id}/reject",
+    response_model=AgentPendingResponse | AgentCompleteResponse,
+)
+def agent_reject(
+    request: Request,
+    response: Response,
+    pending_id: SessionIdPath,
+    token: str = Depends(verify_token),
+) -> AgentPendingResponse | AgentCompleteResponse:
+    """Reject the pending tool call for this session: it is never executed. The
+    graph is told the call was declined and must continue without retrying it.
+
+    This is the real equivalent of the CLI's `[y/N]` gate answered `N`.
+    """
+    agent_graph: AgentGraph = _state["agent_graph"]
+    if not agent_graph.has_pending_approval(pending_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                "No pending tool approval for this session (it may never have "
+                "started, already been resolved, or the server restarted since "
+                "it was created)."
+            ),
+        )
+    _run_agent_step_safely(agent_graph.resume_rejected, pending_id, "api-client")
+    return _agent_status_response(agent_graph, pending_id)

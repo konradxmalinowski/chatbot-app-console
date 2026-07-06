@@ -40,11 +40,12 @@ variables are only needed to run the REST API (see below):
 ## Run
 
 ```bash
-python main.py         # normal mode
-python main.py --rag   # RAG mode — retrieves context from docs/, cites sources
+python main.py           # normal mode
+python main.py --rag     # RAG mode — retrieves context from docs/, cites sources
+python main.py --agent   # agent mode — tools with human-in-the-loop approval
 ```
 
-Exit the chat by submitting an empty prompt.
+Exit the chat by submitting an empty prompt. `--agent` and `--rag` cannot be combined.
 
 ## REST API (Phase 3)
 
@@ -86,6 +87,52 @@ uvicorn api.main:app --reload
   no auth dependency that can fail first. See `api/rate_limit.py`'s comments before
   changing either mechanism.
 
+## LangGraph agent (Phase 4)
+
+`--agent` (CLI) and `POST /agent` + `POST /agent/{pending_id}/approve` + `POST
+/agent/{pending_id}/reject` (API) run a LangGraph `StateGraph` with three tools —
+`web_search` (DuckDuckGo, no API key), `calculator` (AST-restricted evaluator, no
+`eval`/`exec`), `read_doc` (path-confined to `docs/`) — behind a **mandatory**
+human-in-the-loop gate: no tool ever executes without explicit approval, in either
+mode.
+
+- `agent/graph.py`'s `AgentGraph` compiles the graph with a `MemorySaver`
+  checkpointer and `interrupt_before=["tools"]`: execution pauses right before a
+  tool call would run. `session_id` doubles as the LangGraph `thread_id` (same
+  validated field as Phase 2/3, no new ID scheme).
+- **CLI**: synchronous — when the graph pauses, it prints every proposed tool call
+  (there can be more than one in a single turn — parallel tool calling) and prompts
+  once with `[y/N]`; approval/rejection applies to the whole batch.
+- **API**: two-step, by explicit design choice (an auto-approve-via-header
+  alternative was considered and rejected as weakening the safety gate). `POST
+  /agent` runs until it finishes or pauses; a pause returns `{"status":
+  "pending_approval", "pending_id": <session_id>, "pending_tool_calls": [{"tool":
+  str, "args": dict}, ...]}` — **every** pending call, not just one, so an approver
+  can't unknowingly approve a call they never saw. `POST
+  /agent/{pending_id}/approve` executes the batch and continues (executed calls
+  logged to `logs/agent.jsonl` with a real result); `POST
+  /agent/{pending_id}/reject` declines the whole batch instead — the agent must
+  acknowledge it can't complete that step (enforced via
+  `AGENT_SYSTEM_PROMPT_SUFFIX`), not silently retry. Neither route has a per-route
+  `@limiter.limit(...)` decorator, for the same reason `/chat`/`/chat/rag` don't
+  (see above) — `default_limits` covers them via the middleware.
+- `calculator`'s AST evaluator bounds `ast.Pow`'s cost before computing (not just
+  the grammar it accepts): Python ints are arbitrary-precision, so an
+  innocuous-looking `9**9**9` would otherwise pin a CPU core computing a
+  ~369-million-digit number. `_check_pow_cost` estimates the result's bit-length
+  via `log2` and rejects anything over `_MAX_POW_RESULT_BITS` before evaluating.
+- Every tool-call attempt (approved-and-executed, or rejected) is logged as one
+  JSON line to `logs/agent.jsonl` (gitignored, like `sessions/`/`chroma_db/`):
+  `{"timestamp", "session_id", "tool", "args", "result", "declined",
+  "approved_by"}`. Tool results are truncated to 500 chars in the log only — the
+  LLM/caller still receives the full result.
+- Known, accepted limitations (not bugs): `MemorySaver` is in-memory, so a pending
+  approval is lost if the API process restarts before `/approve`/`/reject` is
+  called. `verify_token` authenticates one shared service secret, not a per-user
+  identity, so any valid token holder can approve/reject any session's pending
+  call — identical to the pre-existing `/chat` `session_id` trust model, not new
+  to this phase.
+
 ## RAG pipeline
 
 - `rag/loader.py` — loads `.pdf` / `.txt` / `.md` files from `docs/` (unsupported
@@ -122,8 +169,9 @@ ruff format .        # format
 
 ## Architecture notes
 
-- `main.py` — CLI entry point; runs the chat loop. `build_chain(model_override, rag_enabled)` switches between the plain chain and the RAG-augmented chain (see "RAG pipeline" above), delegating the actual LCEL/RAG-bootstrap construction to `chain_builder.py` / `rag/bootstrap.py`
-- `api/` — REST API entry point (see "REST API (Phase 3)" above): `api/main.py` (FastAPI app + lifespan startup), `api/auth.py` (JWT issuance/verification), `api/rate_limit.py` (shared slowapi `Limiter`), `api/models.py` (Pydantic request/response models)
+- `main.py` — CLI entry point; runs the chat loop. `build_chain(model_override, rag_enabled)` switches between the plain chain and the RAG-augmented chain (see "RAG pipeline" above), delegating the actual LCEL/RAG-bootstrap construction to `chain_builder.py` / `rag/bootstrap.py`. `--agent` runs a separate loop (`run_agent_turn`) driving `agent.graph.AgentGraph` instead
+- `api/` — REST API entry point (see "REST API (Phase 3)" and "LangGraph agent (Phase 4)" above): `api/main.py` (FastAPI app + lifespan startup), `api/auth.py` (JWT issuance/verification), `api/rate_limit.py` (shared slowapi `Limiter`), `api/models.py` (Pydantic request/response models)
+- `agent/` — LangGraph agent module: `agent/tools.py` (`web_search`, `calculator`, `read_doc`), `agent/graph.py` (`AgentGraph` — graph construction, interrupt/checkpoint-based approval, shared by `main.py` and `api/main.py`); see "LangGraph agent (Phase 4)" above
 - `chain_builder.py` — shared LCEL chain construction (Gemini model constructor, prompt templates, RAG citation formatting) used by both `main.py` and `api/main.py`
 - `rag/bootstrap.py` — shared RAG vector-store bootstrap (`build_rag_store()`) used by both entry points; embeddings-provider failures are fatal (`sys.exit`) for the CLI's opt-in `--rag`, but `api/main.py`'s lifespan catches that and degrades to `rag_store=None` instead, since `/chat` doesn't need embeddings at all
 - `constants.py` — holds `SYSTEM_PROMPT` (Polish, bracketed placeholders like `[NAZWA FIRMY]` are intentional — customize before deploying) and the RAG-specific constants (`DOCS_DIR`, `CHROMA_PERSIST_DIR`, `RAG_TOP_K`, `RAG_SYSTEM_PROMPT_SUFFIX`)
