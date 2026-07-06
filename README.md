@@ -19,6 +19,7 @@
 - [Getting Started](#getting-started)
 - [Configuration](#configuration)
 - [Usage](#usage)
+- [RAG Pipeline](#rag-pipeline)
 - [Customizing the System Prompt](#customizing-the-system-prompt)
 - [Project Structure](#project-structure)
 - [Development](#development)
@@ -39,6 +40,7 @@
 - **Rich terminal output** — colored prompts and formatted responses via the `rich` library
 - **Input validation** — rejects inputs exceeding 2 000 characters with a clear error message
 - **Startup checks** — fails fast with descriptive errors when `GEMINI_API_KEY` is missing or `SYSTEM_PROMPT` still contains unfilled placeholders
+- **Retrieval-augmented generation** — optional `--rag` mode answers questions grounded in local documents (`.pdf`, `.txt`, `.md`) with source citations, backed by a local ChromaDB vector store
 
 ---
 
@@ -78,8 +80,10 @@ cp .env.example .env
 |---|---|---|
 | `GEMINI_API_KEY` | Yes | Google AI Studio API key |
 | `GEMINI_LLM_MODEL` | Yes | Gemini model name (e.g. `gemini-2.5-flash`) |
+| `EMBEDDINGS_PROVIDER` | No | Embeddings backend for `--rag`: `ollama` (default, local) or `openai` |
+| `OPENAI_API_KEY` | Only if `EMBEDDINGS_PROVIDER=openai` | OpenAI API key for embeddings |
 
-Copy `.env.example` to `.env` and fill in both values. Never commit `.env`.
+Copy `.env.example` to `.env` and fill in the values you need. Never commit `.env`.
 
 ---
 
@@ -91,9 +95,28 @@ python main.py
 
 # Override the model at runtime
 python main.py --model gemini-1.5-pro
+
+# Enable RAG mode — answers are grounded in docs/, with source citations
+python main.py --rag
 ```
 
 Exit the chat by submitting an empty line (press Enter on a blank prompt).
+
+---
+
+## RAG Pipeline
+
+`--rag` retrieves relevant chunks from local documents and injects them into the prompt, with the model instructed to cite its sources.
+
+- **Corpus** — place `.pdf`, `.txt`, or `.md` files in `docs/`. A placeholder `docs/sample-faq.md` is included so the feature works out of the box; replace or supplement it with your own documents.
+- **Embeddings** — set `EMBEDDINGS_PROVIDER` in `.env`:
+  - `ollama` (default) — runs locally, no cloud key needed. Requires [Ollama](https://ollama.com/download) running with the embedding model pulled: `ollama pull nomic-embed-text`.
+  - `openai` — uses `text-embedding-3-small`, requires `OPENAI_API_KEY`.
+- **Vector store** — [ChromaDB](https://www.trychroma.com/), persisted to `chroma_db/` (git-ignored). Documents are only embedded once; subsequent runs load the existing collection.
+- **Citations** — responses reference sources inline as `[source: filename]`. If nothing relevant was retrieved, the model says so instead of guessing.
+- **Fallback** — if `docs/` has no usable content, `--rag` prints a warning and continues in normal (non-RAG) mode rather than failing.
+
+Without `--rag`, behavior is unchanged from the base chatbot.
 
 ---
 
@@ -108,12 +131,14 @@ Exit the chat by submitting an empty line (press Enter on a blank prompt).
 ```
 chatbot-app/
 ├── main.py               # Entry point — CLI loop, LangChain chain, session wiring
-├── constants.py          # SYSTEM_PROMPT, DEFAULT_SESSION_ID, MAX_INPUT_LENGTH
+├── constants.py          # SYSTEM_PROMPT, DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, RAG constants
 ├── session_store.py      # JSON session persistence utilities
+├── rag/                  # RAG pipeline: loader, chunker, embeddings, store, retriever
 ├── requirements.txt      # Pinned runtime dependencies
 ├── requirements-dev.txt  # Dev tools: pytest, ruff
 ├── .env.example          # Environment variable template (safe to commit)
-├── docs/                 # Stage documentation
+├── docs/                 # RAG corpus — .pdf/.txt/.md documents indexed by --rag
+├── chroma_db/            # ChromaDB persistence (git-ignored, created on first --rag run)
 └── sessions/             # Runtime session files (git-ignored)
 ```
 

@@ -4,6 +4,27 @@ DEFAULT_SESSION_ID = "1"
 MAX_INPUT_LENGTH = 2000
 SESSIONS_DIR = Path("sessions")
 
+# RAG pipeline (Phase 2)
+DOCS_DIR = Path("docs")
+CHROMA_PERSIST_DIR = Path("chroma_db")
+RAG_TOP_K = 3
+
+# Appended to SYSTEM_PROMPT (never replaces it) when --rag is enabled. Instructs the
+# model to cite retrieved sources and to admit uncertainty instead of inventing one.
+RAG_SYSTEM_PROMPT_SUFFIX = """
+
+# RAG CONTEXT (Retrieved Knowledge)
+You are also given retrieved context chunks below, each one tagged with the filename
+it came from. Follow these rules when using them:
+1. When a claim in your answer is drawn from a retrieved chunk, cite it inline
+   immediately after that claim using the exact format `[source: <filename>]`.
+2. If a claim draws on more than one chunk, add one citation per source.
+3. Never invent or guess a `[source: ...]` citation for a filename that was not
+   actually part of the retrieved context.
+4. If the retrieved context contains nothing relevant to the question, say plainly
+   that you don't have that information — do not fabricate an answer or a citation.
+"""
+
 SYSTEM_PROMPT = """
 # ROLE (Rola)
 Jesteś profesjonalnym, asertywnym i pomocnym wirtualnym asystentem dla [NAZWA FIRMY / PROJEKTU]. Twoim głównym celem jest [GŁÓWNY CEL BOTA, np. wspieranie użytkowników w rozwiązywaniu problemów technicznych / pomoc w wyborze odpowiedniego produktu]. Twoja osobowość to połączenie eksperckiej wiedzy z przystępnym, życzliwym podejściem.

@@ -9,6 +9,7 @@ dist/
 build/
 *.egg-info/
 sessions/
+chroma_db/
 
 # IDE config
 .idea/

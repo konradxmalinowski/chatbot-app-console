@@ -17,10 +17,11 @@ These apply to every session, every file, every commit, regardless of what the s
 task is.
 
 - **English only** for source code, comments, commit messages, PR descriptions, and
-  project docs — **with one deliberate exception**: `constants.py`'s `SYSTEM_PROMPT` and
-  the `docs/etap-*.md` course notes are intentionally written in Polish (the prompt is a
-  customizable template for a Polish-speaking business; the docs are course-progression
-  notes). Don't "fix" these to English — see `CLAUDE.md`.
+  project docs — **with one deliberate exception**: `constants.py`'s `SYSTEM_PROMPT` is
+  intentionally written in Polish (a customizable template for a Polish-speaking
+  business). Don't "fix" it to English — see `CLAUDE.md`. (The `docs/etap-*.md` Polish
+  course notes that used to share this exception were removed 2026-07-06 when `docs/`
+  became the RAG corpus directory — see Section 8.)
 - **No emojis, anywhere.** Not in code, Markdown, commit messages, PR comments. Currently
   followed — no emojis found in the repo as of 2026-07-06.
 - **Konrad is the sole git author.** Never add a `Co-Authored-By: Claude` (or any
@@ -115,15 +116,27 @@ automated lint/test on push, no dependency scanning, no security scanning config
 
 ## 8. Writing style: README & docs
 
-Distilled from what `README.md` actually does:
+Distilled from what `README.md` actually does (updated 2026-07-06 — an earlier version
+of this section described an older README revision that predated badges/TOC being
+added; corrected to match the current file):
 
-- Title, then a short paragraph on what the project is and what it demonstrates —
-  no badges row, no table of contents.
+- Centered `<h1>` title + a row of shield.io badges (stack/license) + a one-paragraph
+  centered tagline, then a `---` rule before the Table of Contents.
+- A `## Table of Contents` linking every top-level section — this repo's README does
+  use one, unlike the sibling project's convention this file was originally adapted
+  from.
 - Feature list as bullets with **bolded lead phrase** — short benefit, not marketing copy.
 - Prerequisites as a plain list (Python version, API key requirement).
 - Setup as a single numbered `bash` code block with inline `#` comments per step, not
   prose describing commands.
-- `docs/etap-*.md` are course-progression notes in Polish, documenting each build stage
-  (`etap-1-wybor-modelu.md` = stage 1, model selection, etc.) — these are learning
-  artifacts, not user-facing product docs, and are exempt from the English-only rule
-  (see Section 1).
+- Config/env vars as a table (`Variable | Required | Description`), not a bulleted list.
+- `---` horizontal rules between every top-level section.
+- A "Project Structure" section with a fenced tree diagram and one-line inline
+  comments per entry.
+- `docs/` is the RAG corpus directory (Phase 2) — `.pdf`/`.txt`/`.md` files indexed by
+  `--rag`, currently seeded with a placeholder `docs/sample-faq.md`. The old
+  `docs/etap-*.md` Polish course-progression notes this section previously referenced
+  were removed 2026-07-06 (see [[feedback_no_internal_dirs_in_repo]] — unrelated
+  directories, but same cleanup session) and are no longer part of this project;
+  the English-only exception in Section 1 for those files no longer applies to
+  anything in the current tree.
