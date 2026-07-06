@@ -20,5 +20,10 @@ plans/
 .planning/
 .claude/
 
+# Internal meta docs — local reference only, never published to the public remote
+# (2026-07-07)
+PROJECT_RULES.md
+CLAUDE.md
+
 # Ruff cache
 .ruff_cache/
