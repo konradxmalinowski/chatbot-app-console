@@ -80,10 +80,10 @@ interchangeable or merged):
 ## Run
 
 ```bash
-python main.py                          # normal mode (Gemini by default)
-python main.py --rag                    # RAG mode — retrieves context from docs/, cites sources
-python main.py --agent                  # agent mode — tools with human-in-the-loop approval
-python main.py --llm-provider ollama    # switch chat model provider at runtime
+python src/main.py                          # normal mode (Gemini by default)
+python src/main.py --rag                    # RAG mode — retrieves context from docs/, cites sources
+python src/main.py --agent                  # agent mode — tools with human-in-the-loop approval
+python src/main.py --llm-provider ollama    # switch chat model provider at runtime
 ```
 
 Exit the chat by submitting an empty prompt. `--agent` and `--rag` cannot be combined.
@@ -94,7 +94,7 @@ A FastAPI app in `api/` exposes the same chat/RAG functionality over HTTP, as an
 additional entry point alongside the CLI (the CLI is unaffected by it):
 
 ```bash
-uvicorn api.main:app --reload
+uvicorn api.main:app --reload --app-dir src
 ```
 
 - `GET /docs` — Swagger UI (automatic).
@@ -189,7 +189,7 @@ mode.
   `chroma_db/` (gitignored). Idempotent: if the collection already has data, it's loaded
   instead of re-embedded.
 - `rag/retriever.py` — `retrieve(store, query, k=3)` returns the top-k chunks.
-- `--rag` is opt-in and additive: `python main.py` (no flag) behavior is unchanged. If
+- `--rag` is opt-in and additive: `python src/main.py` (no flag) behavior is unchanged. If
   `docs/` has no usable content, `--rag` prints a warning and falls back to normal mode
   rather than crashing.
 - `constants.RAG_SYSTEM_PROMPT_SUFFIX` is appended to (never replaces) `SYSTEM_PROMPT` in
@@ -209,6 +209,13 @@ ruff format .        # format
 ```
 
 ## Architecture notes
+
+All application code lives under `src/` (moved there 2026-07-06; previously flat at
+repo root). No `pyproject.toml`/packaging was introduced — internal imports (`from
+constants import ...`, `from rag.loader import ...`, etc.) are unchanged, since
+Python adds the running script's own directory to its module search path
+automatically (`python src/main.py`) and `uvicorn ... --app-dir src` does the
+equivalent for the API. Paths below are relative to `src/` unless noted otherwise.
 
 - `main.py` — CLI entry point; runs the chat loop. `build_chain(model_override, rag_enabled)` switches between the plain chain and the RAG-augmented chain (see "RAG pipeline" above), delegating the actual LCEL/RAG-bootstrap construction to `chain_builder.py` / `rag/bootstrap.py`. `--agent` runs a separate loop (`run_agent_turn`) driving `agent.graph.AgentGraph` instead
 - `api/` — REST API entry point (see "REST API (Phase 3)" and "LangGraph agent (Phase 4)" above): `api/main.py` (FastAPI app + lifespan startup), `api/auth.py` (JWT issuance/verification), `api/rate_limit.py` (shared slowapi `Limiter`), `api/models.py` (Pydantic request/response models)

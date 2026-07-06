@@ -60,7 +60,7 @@ task is.
 | Area | Choice | Notes |
 |---|---|---|
 | Language | Python 3.11+ | per `CLAUDE.md` |
-| LLM framework | LangChain (`langchain`, `langchain-core`) | LCEL pipeline in `main.py` |
+| LLM framework | LangChain (`langchain`, `langchain-core`) | LCEL pipeline in `src/main.py` |
 | Model backend | Pluggable via `LLM_PROVIDER` (`llm_provider.py`) | `gemini` (default, `langchain-google-genai`, model from `GEMINI_LLM_MODEL`), `openai` (`langchain-openai`), `anthropic` (`langchain-anthropic`, added 2026-07-06), or `ollama` (`langchain-ollama`, local, no cloud key) |
 | Env loading | `python-dotenv` | `.env` holds `GEMINI_API_KEY` + `GEMINI_LLM_MODEL` |
 | Terminal UI | `rich` (pinned `==15.0.0`) | colored prompts/output |
@@ -99,7 +99,7 @@ ruff format .
 ## 5. Release process
 
 **Not applicable.** No package is published (no `pyproject.toml`, no PyPI target). The
-app is run directly via `python main.py`; there is no versioning or release pipeline.
+app is run directly via `python src/main.py`; there is no versioning or release pipeline.
 
 ---
 

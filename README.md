@@ -103,21 +103,21 @@ Ollama (`LLM_PROVIDER=ollama` or `EMBEDDINGS_PROVIDER=ollama`) requires no cloud
 
 ```bash
 # Start the chatbot with the provider/model defined in .env (defaults to Gemini)
-python main.py
+python src/main.py
 
 # Override the model at runtime (works with whichever provider is active)
-python main.py --model gemini-1.5-pro
+python src/main.py --model gemini-1.5-pro
 
 # Switch LLM provider at runtime (overrides LLM_PROVIDER)
-python main.py --llm-provider ollama
-python main.py --llm-provider openai --model gpt-4o-mini
-python main.py --llm-provider anthropic --model claude-3-5-haiku-latest
+python src/main.py --llm-provider ollama
+python src/main.py --llm-provider openai --model gpt-4o-mini
+python src/main.py --llm-provider anthropic --model claude-3-5-haiku-latest
 
 # Enable RAG mode — answers are grounded in docs/, with source citations
-python main.py --rag
+python src/main.py --rag
 
 # Enable agent mode — tools with a [y/N] approval prompt before every call
-python main.py --agent
+python src/main.py --agent
 ```
 
 Exit the chat by submitting an empty line (press Enter on a blank prompt). `--agent` and `--rag` cannot be combined.
@@ -146,7 +146,7 @@ The same chat/RAG functionality is available over HTTP via FastAPI (`api/`), as 
 
 ```bash
 pip install -r requirements.txt   # includes fastapi, uvicorn, pyjwt, slowapi
-uvicorn api.main:app --reload
+uvicorn api.main:app --reload --app-dir src
 ```
 
 - **`GET /docs`** — Swagger UI (automatic).
@@ -208,14 +208,15 @@ curl -X POST localhost:8000/agent/my-session/approve \
 
 ```
 chatbot-app/
-├── main.py               # CLI entry point — chat loop, session wiring
-├── api/                  # REST API entry point: FastAPI app, JWT auth, rate limiting
-├── agent/                # LangGraph agent: tools (web search, calculator, read_doc), graph
-├── chain_builder.py      # LCEL chain construction shared by main.py and api/
-├── llm_provider.py       # LLM_PROVIDER dispatch: gemini/openai/anthropic/ollama chat model construction
-├── constants.py          # SYSTEM_PROMPT, DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, RAG/agent constants
-├── session_store.py      # JSON session persistence utilities
-├── rag/                  # RAG pipeline: loader, chunker, embeddings, store, retriever, bootstrap
+├── src/
+│   ├── main.py            # CLI entry point — chat loop, session wiring
+│   ├── api/                # REST API entry point: FastAPI app, JWT auth, rate limiting
+│   ├── agent/               # LangGraph agent: tools (web search, calculator, read_doc), graph
+│   ├── chain_builder.py    # LCEL chain construction shared by main.py and api/
+│   ├── llm_provider.py     # LLM_PROVIDER dispatch: gemini/openai/anthropic/ollama chat model construction
+│   ├── constants.py        # SYSTEM_PROMPT, DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, RAG/agent constants
+│   ├── session_store.py    # JSON session persistence utilities
+│   └── rag/                # RAG pipeline: loader, chunker, embeddings, store, retriever, bootstrap
 ├── requirements.txt      # Pinned runtime dependencies
 ├── requirements-dev.txt  # Dev tools: pytest, ruff
 ├── .env.example          # Environment variable template (safe to commit)
@@ -224,6 +225,8 @@ chatbot-app/
 ├── logs/                 # Agent tool-call logs (git-ignored, created on first --agent run)
 └── sessions/             # Runtime session files (git-ignored)
 ```
+
+Run everything from the repo root: `python src/main.py` (Python automatically adds `src/` to its module search path since that's the running script's own directory) and `uvicorn api.main:app --app-dir src` (the `--app-dir` flag does the same for the API). No `pyproject.toml`/packaging was introduced — internal imports (`from constants import ...`, `from rag.loader import ...`, etc.) are unchanged.
 
 ---
 
