@@ -6,24 +6,18 @@ import sys
 from dotenv import load_dotenv
 from google.api_core.exceptions import GoogleAPIError, PermissionDenied
 from langchain_core.chat_history import InMemoryChatMessageHistory
-from langchain_core.documents import Document
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import RunnableConfig, RunnableLambda, RunnablePassthrough
+from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_google_genai import ChatGoogleGenerativeAI
 from rich.console import Console
 
+from chain_builder import build_base_chain, build_llm
 from constants import (
-    CHROMA_PERSIST_DIR,
     DEFAULT_SESSION_ID,
-    DOCS_DIR,
     MAX_INPUT_LENGTH,
-    RAG_SYSTEM_PROMPT_SUFFIX,
-    RAG_TOP_K,
     SESSIONS_DIR,
     SYSTEM_PROMPT,
 )
+from rag.bootstrap import build_rag_store
 from session_store import load_session, save_session
 
 logging.basicConfig(level=logging.ERROR, format="%(levelname)s: %(message)s")
@@ -70,47 +64,24 @@ def _check_system_prompt_placeholders() -> None:
 
 
 def _init_rag_store():
-    """Build or load the RAG vector store from ``docs/``.
+    """Build or load the RAG vector store from ``docs/`` (CLI ``--rag`` mode).
 
     Returns None (with a printed warning) when ``docs/`` has no usable content, so
     the caller can fall back to non-RAG mode instead of crashing. Any embeddings
     provider failure (unreachable Ollama, missing model, missing OPENAI_API_KEY,
     invalid EMBEDDINGS_PROVIDER) exits the process — there is no sensible RAG
     fallback for that case, matching the fail-fast style used elsewhere in this file.
+
+    The actual load/chunk/embed/build sequence lives in ``rag.bootstrap.build_rag_store``,
+    shared with the REST API (``api/main.py``); this wrapper just applies the CLI's
+    ``rich`` markup around the plain status message it returns.
     """
-    from rag.chunker import chunk_documents
-    from rag.embeddings import get_embeddings_provider
-    from rag.loader import load_documents
-    from rag.store import build_or_load
-
-    documents = load_documents(DOCS_DIR)
-    if not documents:
-        console.print(
-            f"[yellow]Warning:[/] no readable documents found in '{DOCS_DIR}/'. "
-            "Continuing in non-RAG mode."
-        )
-        return None
-
-    chunks = chunk_documents(documents)
-    embeddings = get_embeddings_provider()
-    store = build_or_load(chunks, embeddings, persist_directory=str(CHROMA_PERSIST_DIR))
-    console.print(
-        f"[dim]RAG mode enabled — {len(documents)} document(s), "
-        f"{len(chunks)} chunk(s) available for retrieval.[/]"
-    )
+    store, message = build_rag_store()
+    if store is None:
+        console.print(f"[yellow]Warning:[/] {message}")
+    else:
+        console.print(f"[dim]{message}[/]")
     return store
-
-
-def _format_retrieved_context(chunks: list[Document]) -> str:
-    """Render retrieved chunks as a citation-ready context block for the prompt."""
-    if not chunks:
-        return "(No relevant context was found for this question.)"
-
-    parts = []
-    for chunk in chunks:
-        source = chunk.metadata.get("source", "unknown")
-        parts.append(f"[source: {source}]\n{chunk.page_content}")
-    return "\n\n".join(parts)
 
 
 def build_chain(model_override: str | None = None, rag_enabled: bool = False):
@@ -140,43 +111,11 @@ def build_chain(model_override: str | None = None, rag_enabled: bool = False):
         )
         sys.exit(1)
 
-    llm = ChatGoogleGenerativeAI(model=llm_model, google_api_key=api_key)
-
-    parser = StrOutputParser()
+    llm = build_llm(api_key, llm_model)
 
     rag_store = _init_rag_store() if rag_enabled else None
 
-    if rag_store is not None:
-        from rag.retriever import retrieve
-
-        def _retrieve_context(inputs: dict) -> str:
-            chunks = retrieve(rag_store, inputs["input"], k=RAG_TOP_K)
-            return _format_retrieved_context(chunks)
-
-        chat_template_prompt = ChatPromptTemplate(
-            [
-                ("system", SYSTEM_PROMPT + RAG_SYSTEM_PROMPT_SUFFIX),
-                MessagesPlaceholder(variable_name="chat_history"),
-                ("human", "Retrieved context:\n{context}\n\nQuestion: {input}"),
-            ]
-        )
-
-        base_chain = (
-            RunnablePassthrough.assign(context=RunnableLambda(_retrieve_context))
-            | chat_template_prompt
-            | llm
-            | parser
-        )
-    else:
-        chat_template_prompt = ChatPromptTemplate(
-            [
-                ("system", SYSTEM_PROMPT),
-                MessagesPlaceholder(variable_name="chat_history"),
-                ("human", "{input}"),
-            ]
-        )
-
-        base_chain = chat_template_prompt | llm | parser
+    base_chain = build_base_chain(llm, rag_store=rag_store)
 
     history_state: dict[str, InMemoryChatMessageHistory] = {}
 

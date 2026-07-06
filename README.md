@@ -20,6 +20,7 @@
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [RAG Pipeline](#rag-pipeline)
+- [REST API](#rest-api)
 - [Customizing the System Prompt](#customizing-the-system-prompt)
 - [Project Structure](#project-structure)
 - [Development](#development)
@@ -41,6 +42,7 @@
 - **Input validation** — rejects inputs exceeding 2 000 characters with a clear error message
 - **Startup checks** — fails fast with descriptive errors when `GEMINI_API_KEY` is missing or `SYSTEM_PROMPT` still contains unfilled placeholders
 - **Retrieval-augmented generation** — optional `--rag` mode answers questions grounded in local documents (`.pdf`, `.txt`, `.md`) with source citations, backed by a local ChromaDB vector store
+- **REST API** — the same chat/RAG functionality exposed over HTTP via FastAPI, with JWT auth, per-token rate limiting, and Swagger docs
 
 ---
 
@@ -82,8 +84,11 @@ cp .env.example .env
 | `GEMINI_LLM_MODEL` | Yes | Gemini model name (e.g. `gemini-2.5-flash`) |
 | `EMBEDDINGS_PROVIDER` | No | Embeddings backend for `--rag`: `ollama` (default, local) or `openai` |
 | `OPENAI_API_KEY` | Only if `EMBEDDINGS_PROVIDER=openai` | OpenAI API key for embeddings |
+| `API_SECRET` | Only for the REST API | Pre-shared secret exchanged for a JWT via `POST /auth/token` |
+| `JWT_SECRET_KEY` | Only for the REST API | Signs issued JWTs (HS256); must differ from `API_SECRET` |
+| `CORS_ORIGINS` | Only for the REST API | Comma-separated allowed origins; unset = none allowed (fail closed) |
 
-Copy `.env.example` to `.env` and fill in the values you need. Never commit `.env`.
+Copy `.env.example` to `.env` and fill in the values you need. Never commit `.env`. Generate secrets with `openssl rand -hex 32`.
 
 ---
 
@@ -120,6 +125,38 @@ Without `--rag`, behavior is unchanged from the base chatbot.
 
 ---
 
+## REST API
+
+The same chat/RAG functionality is available over HTTP via FastAPI (`api/`), as an additional entry point alongside the CLI:
+
+```bash
+pip install -r requirements.txt   # includes fastapi, uvicorn, pyjwt, slowapi
+uvicorn api.main:app --reload
+```
+
+- **`GET /docs`** — Swagger UI (automatic).
+- **`POST /auth/token`** — exchange `API_SECRET` for a short-lived (1h) JWT. Service-to-service auth (pre-shared secret), not a per-user login system. Rate limited 5/min to slow down brute-forcing `API_SECRET`.
+- **`POST /chat`** / **`POST /chat/rag`** — Bearer-authenticated, rate limited 20/min per token (or per IP for unauthenticated requests, so failed-auth traffic is throttled too). Body: `{"message": str, "session_id": str}`. `/chat/rag` also returns `sources` and responds `503` if the vector store isn't ready.
+- **`GET /health`** — no auth required, not rate limited. Reports `{"status": "ok", "vector_store": "ready" | "not_initialized"}`.
+- **CORS** fails closed: set `CORS_ORIGINS` to an explicit comma-separated list, or nothing is allowed.
+
+Example:
+
+```bash
+# Get a token
+TOKEN=$(curl -s -X POST localhost:8000/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"api_secret":"<your API_SECRET>"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+
+# Chat
+curl -X POST localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"message":"Hello!","session_id":"my-session"}'
+```
+
+---
+
 ## Customizing the System Prompt
 
 `constants.py` contains `SYSTEM_PROMPT` — a chatbot persona template with bracketed placeholders such as `[NAZWA FIRMY / PROJEKTU]` and `[GŁÓWNY CEL BOTA]`. Replace every `[...]` placeholder with your project's name, goal, contact information, and topic scope before deploying for any specific use case. The startup check will refuse to run if any placeholder remains unfilled.
@@ -130,10 +167,12 @@ Without `--rag`, behavior is unchanged from the base chatbot.
 
 ```
 chatbot-app/
-├── main.py               # Entry point — CLI loop, LangChain chain, session wiring
+├── main.py               # CLI entry point — chat loop, session wiring
+├── api/                  # REST API entry point: FastAPI app, JWT auth, rate limiting
+├── chain_builder.py      # LCEL chain construction shared by main.py and api/
 ├── constants.py          # SYSTEM_PROMPT, DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, RAG constants
 ├── session_store.py      # JSON session persistence utilities
-├── rag/                  # RAG pipeline: loader, chunker, embeddings, store, retriever
+├── rag/                  # RAG pipeline: loader, chunker, embeddings, store, retriever, bootstrap
 ├── requirements.txt      # Pinned runtime dependencies
 ├── requirements-dev.txt  # Dev tools: pytest, ruff
 ├── .env.example          # Environment variable template (safe to commit)
