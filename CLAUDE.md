@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+See `PROJECT_RULES.md` for the standing collaboration rules (git authorship, commit vs.
+push approval, English-only exceptions, GSD workflow) and a stack/process comparison
+against this repo — read it at the start of every session, same as this file.
+
 ## Project
 
 Educational CLI chatbot using LangChain + Google Gemini (`gemini-2.5-flash`). Single-session, in-memory conversation history — history is lost on restart.
