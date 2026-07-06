@@ -61,7 +61,7 @@ task is.
 |---|---|---|
 | Language | Python 3.11+ | per `CLAUDE.md` |
 | LLM framework | LangChain (`langchain`, `langchain-core`) | LCEL pipeline in `main.py` |
-| Model backend | Google Gemini via `langchain-google-genai` | model name from `GEMINI_LLM_MODEL` env var (e.g. `gemini-2.5-flash`) — cloud-only, no offline/local inference requirement |
+| Model backend | Pluggable via `LLM_PROVIDER` (`llm_provider.py`) | `gemini` (default, `langchain-google-genai`, model from `GEMINI_LLM_MODEL`), `openai` (`langchain-openai`), `anthropic` (`langchain-anthropic`, added 2026-07-06), or `ollama` (`langchain-ollama`, local, no cloud key) |
 | Env loading | `python-dotenv` | `.env` holds `GEMINI_API_KEY` + `GEMINI_LLM_MODEL` |
 | Terminal UI | `rich` (pinned `==15.0.0`) | colored prompts/output |
 | Data models | Pydantic v2 | transitive dependency via LangChain |
@@ -74,8 +74,10 @@ task is.
 - Single hardcoded session id (`"1"`) — no multi-user support.
 - Conversation history lives in memory during the session and is persisted to
   `sessions/*.json` via `session_store.py`; it does not survive without that file.
-- Cloud LLM calls are the norm here (opposite of `llm-security-scanner`, which is
-  offline-first) — `GEMINI_API_KEY` talks to Google's hosted API on every turn.
+- Cloud LLM calls are the default here (opposite of `llm-security-scanner`, which is
+  offline-first) — `GEMINI_API_KEY` (default provider) talks to Google's hosted API on
+  every turn. `LLM_PROVIDER=ollama` (added 2026-07-06) is the one fully local/offline
+  option, requiring no cloud key.
 
 ---
 

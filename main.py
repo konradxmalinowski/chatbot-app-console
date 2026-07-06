@@ -3,6 +3,9 @@ import logging
 import os
 import sys
 
+import anthropic
+import ollama
+import openai
 from dotenv import load_dotenv
 from google.api_core.exceptions import GoogleAPIError, PermissionDenied
 from langchain_core.chat_history import InMemoryChatMessageHistory
@@ -11,13 +14,14 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from rich.console import Console
 
 from agent.graph import AgentGraph
-from chain_builder import build_base_chain, build_llm
+from chain_builder import build_base_chain
 from constants import (
     DEFAULT_SESSION_ID,
     MAX_INPUT_LENGTH,
     SESSIONS_DIR,
     SYSTEM_PROMPT,
 )
+from llm_provider import get_llm
 from rag.bootstrap import build_rag_store
 from session_store import load_session, save_session
 
@@ -31,26 +35,6 @@ _PLACEHOLDER_MARKERS = [
     "[EMAIL/LINK",
     "[Temat",
 ]
-
-
-def _validate_env() -> tuple[str, str]:
-    """Read and validate required environment variables.
-
-    Returns (api_key, env_model). env_model may be an empty string when the
-    caller intends to supply a model override.  Exits immediately if GEMINI_API_KEY
-    is absent.
-    """
-    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-    env_model = os.environ.get("GEMINI_LLM_MODEL", "").strip()
-
-    if not api_key:
-        console.print(
-            "[red]Missing required env var: GEMINI_API_KEY. "
-            "Copy .env.example to .env and fill in your key.[/]"
-        )
-        sys.exit(1)
-
-    return api_key, env_model
 
 
 def _check_system_prompt_placeholders() -> None:
@@ -91,8 +75,8 @@ def build_chain(model_override: str | None = None, rag_enabled: bool = False):
     Parameters
     ----------
     model_override:
-        When supplied (e.g. via --model), takes precedence over the
-        GEMINI_LLM_MODEL environment variable.
+        When supplied (e.g. via --model), takes precedence over the active
+        provider's default/env-configured model name (see llm_provider.py).
     rag_enabled:
         When True, retrieves top-k chunks from ``docs/`` per turn and injects them
         into the prompt with citation instructions. Falls back to standard
@@ -101,18 +85,9 @@ def build_chain(model_override: str | None = None, rag_enabled: bool = False):
     """
     load_dotenv()
 
-    api_key, env_model = _validate_env()
     _check_system_prompt_placeholders()
 
-    llm_model = model_override or env_model
-    if not llm_model:
-        console.print(
-            "[red]No model specified. Set GEMINI_LLM_MODEL in .env "
-            "or pass --model <model-name> on the command line.[/]"
-        )
-        sys.exit(1)
-
-    llm = build_llm(api_key, llm_model)
+    llm = get_llm(model_override)
 
     rag_store = _init_rag_store() if rag_enabled else None
 
@@ -164,9 +139,21 @@ def chat_with_llm(conversation_chain, user_prompt: str) -> str:
         logging.error("Network error — check your connection.")
         console.print("[red]Error:[/] Network error — check your connection.")
         return ""
+    except openai.OpenAIError as exc:
+        logging.error("OpenAI API error: %s", exc)
+        console.print("[red]Error:[/] Upstream LLM error (OpenAI).")
+        return ""
+    except anthropic.AnthropicError as exc:
+        logging.error("Anthropic API error: %s", exc)
+        console.print("[red]Error:[/] Upstream LLM error (Anthropic).")
+        return ""
+    except (ConnectionError, ollama.ResponseError) as exc:
+        logging.error("Ollama error: %s", exc)
+        console.print("[red]Error:[/] Upstream LLM error (Ollama).")
+        return ""
     except Exception as exc:
         logging.error("Unexpected error: %s", exc)
-        console.print(f"[red]Error:[/] Unexpected error: {exc}")
+        console.print("[red]Error:[/] Unexpected error — see logs for details.")
         return ""
 
 
@@ -194,9 +181,21 @@ def run_agent_turn(agent_graph: AgentGraph, session_id: str, user_prompt: str) -
         logging.error("Network error — check your connection.")
         console.print("[red]Error:[/] Network error — check your connection.")
         return
+    except openai.OpenAIError as exc:
+        logging.error("OpenAI API error: %s", exc)
+        console.print("[red]Error:[/] Upstream LLM error (OpenAI).")
+        return
+    except anthropic.AnthropicError as exc:
+        logging.error("Anthropic API error: %s", exc)
+        console.print("[red]Error:[/] Upstream LLM error (Anthropic).")
+        return
+    except (ConnectionError, ollama.ResponseError) as exc:
+        logging.error("Ollama error: %s", exc)
+        console.print("[red]Error:[/] Upstream LLM error (Ollama).")
+        return
     except Exception as exc:
         logging.error("Unexpected error: %s", exc)
-        console.print(f"[red]Error:[/] Unexpected error: {exc}")
+        console.print("[red]Error:[/] Unexpected error — see logs for details.")
         return
 
     while agent_graph.has_pending_approval(session_id):
@@ -231,9 +230,21 @@ def run_agent_turn(agent_graph: AgentGraph, session_id: str, user_prompt: str) -
             logging.error("Network error — check your connection.")
             console.print("[red]Error:[/] Network error — check your connection.")
             return
+        except openai.OpenAIError as exc:
+            logging.error("OpenAI API error: %s", exc)
+            console.print("[red]Error:[/] Upstream LLM error (OpenAI).")
+            return
+        except anthropic.AnthropicError as exc:
+            logging.error("Anthropic API error: %s", exc)
+            console.print("[red]Error:[/] Upstream LLM error (Anthropic).")
+            return
+        except (ConnectionError, ollama.ResponseError) as exc:
+            logging.error("Ollama error: %s", exc)
+            console.print("[red]Error:[/] Upstream LLM error (Ollama).")
+            return
         except Exception as exc:
             logging.error("Unexpected error: %s", exc)
-            console.print(f"[red]Error:[/] Unexpected error: {exc}")
+            console.print("[red]Error:[/] Unexpected error — see logs for details.")
             return
 
     response = agent_graph.get_final_response(session_id)
@@ -243,30 +254,35 @@ def run_agent_turn(agent_graph: AgentGraph, session_id: str, user_prompt: str) -
 def build_agent_graph(model_override: str | None = None) -> AgentGraph:
     """Build the LangGraph agent used by ``--agent`` CLI mode."""
     load_dotenv()
-    api_key, env_model = _validate_env()
     _check_system_prompt_placeholders()
 
-    llm_model = model_override or env_model
-    if not llm_model:
-        console.print(
-            "[red]No model specified. Set GEMINI_LLM_MODEL in .env "
-            "or pass --model <model-name> on the command line.[/]"
-        )
-        sys.exit(1)
-
-    llm = build_llm(api_key, llm_model)
+    llm = get_llm(model_override)
     return AgentGraph(llm)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="chatbot-app — LangChain + Gemini CLI chatbot"
+        description="chatbot-app — LangChain multi-provider CLI chatbot"
     )
     parser.add_argument(
         "--model",
         metavar="MODEL",
         default=None,
-        help="Gemini model name to use (overrides GEMINI_LLM_MODEL env var)",
+        help=(
+            "Chat model name to use with the active LLM provider (overrides "
+            "GEMINI_LLM_MODEL, or the provider's default model, depending on "
+            "--llm-provider/LLM_PROVIDER)"
+        ),
+    )
+    parser.add_argument(
+        "--llm-provider",
+        metavar="PROVIDER",
+        choices=["gemini", "openai", "anthropic", "ollama"],
+        default=None,
+        help=(
+            "Chat model provider to use (overrides the LLM_PROVIDER env var, "
+            "which itself defaults to gemini)"
+        ),
     )
     parser.add_argument(
         "--rag",
@@ -286,6 +302,13 @@ def main():
         ),
     )
     args = parser.parse_args()
+
+    if args.llm_provider:
+        # --llm-provider overrides the LLM_PROVIDER env var for this process.
+        # llm_provider.get_llm() reads LLM_PROVIDER (default "gemini") from the
+        # environment as its single source of truth, so the override is applied
+        # here rather than duplicating the default value in argparse.
+        os.environ["LLM_PROVIDER"] = args.llm_provider
 
     if args.agent and args.rag:
         console.print(

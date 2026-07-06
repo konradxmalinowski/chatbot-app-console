@@ -8,7 +8,11 @@ against this repo — read it at the start of every session, same as this file.
 
 ## Project
 
-Educational CLI chatbot using LangChain + Google Gemini (`gemini-2.5-flash`). Single-session, in-memory conversation history — history is lost on restart. Optional RAG mode (`--rag`) retrieves context from local documents in `docs/` via a ChromaDB vector store — see "RAG pipeline" below.
+Educational CLI chatbot using LangChain, with a pluggable chat model backend (Gemini by
+default; OpenAI, Anthropic, or local Ollama also supported — see "LLM provider selection"
+below). Single-session, in-memory conversation history — history is lost on restart.
+Optional RAG mode (`--rag`) retrieves context from local documents in `docs/` via a
+ChromaDB vector store — see "RAG pipeline" below.
 
 ## Setup
 
@@ -17,32 +21,69 @@ python -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -r requirements-dev.txt   # dev tools: ruff, pytest
-cp .env.example .env            # then fill in GEMINI_API_KEY
+cp .env.example .env            # then fill in GEMINI_API_KEY (or another provider's key)
 ```
 
 ## Environment variables
 
-`GEMINI_API_KEY` and `GEMINI_LLM_MODEL` must be present in `.env`. The RAG variables are
+`GEMINI_API_KEY`/`GEMINI_LLM_MODEL` are only required while `LLM_PROVIDER` is unset or
+`gemini` (the default) — each provider validates only its own requirements at startup,
+via `llm_provider.get_llm()` (see "LLM provider selection" below). The RAG variables are
 only needed when running with `--rag` (or the REST API, which builds the RAG store at
 startup regardless of a flag). The `API_SECRET` / `JWT_SECRET_KEY` / `CORS_ORIGINS`
 variables are only needed to run the REST API (see below):
 
 | Variable | Description |
 |---|---|
-| `GEMINI_API_KEY` | Google AI Studio API key |
-| `GEMINI_LLM_MODEL` | Model name, e.g. `gemini-2.5-flash` |
-| `EMBEDDINGS_PROVIDER` | `ollama` (default) or `openai` — embeddings backend for `--rag` |
-| `OPENAI_API_KEY` | Only required when `EMBEDDINGS_PROVIDER=openai` |
+| `LLM_PROVIDER` | `gemini` (default), `openai`, `anthropic`, or `ollama` — chat model backend |
+| `GEMINI_API_KEY` | Required when `LLM_PROVIDER=gemini` — Google AI Studio API key |
+| `GEMINI_LLM_MODEL` | Required when `LLM_PROVIDER=gemini`, unless `--model` is passed |
+| `OPENAI_API_KEY` | Required when `LLM_PROVIDER=openai` or `EMBEDDINGS_PROVIDER=openai` — same key covers both |
+| `ANTHROPIC_API_KEY` | Required when `LLM_PROVIDER=anthropic` |
+| `EMBEDDINGS_PROVIDER` | `ollama` (default) or `openai` — embeddings backend for `--rag` (unrelated to `LLM_PROVIDER`) |
 | `API_SECRET` | REST API only — pre-shared secret exchanged for a JWT via `POST /auth/token` |
 | `JWT_SECRET_KEY` | REST API only — signs issued JWTs (HS256); must differ from `API_SECRET` |
 | `CORS_ORIGINS` | REST API only — comma-separated allowed origins; unset/empty = none allowed (fail closed) |
 
+## LLM provider selection
+
+`llm_provider.py` mirrors `rag/embeddings.py`'s `EMBEDDINGS_PROVIDER` pattern for chat
+models (a structurally similar but functionally separate concern — the two are not
+interchangeable or merged):
+
+- `get_llm(model_override=None)` reads `LLM_PROVIDER` (default `gemini`, preserving
+  original single-provider behavior when unset) and dispatches to one
+  `_get_<provider>_llm()` per provider, each validating only that provider's own
+  requirements and failing fast (`console.print` + `sys.exit(1)`) with an actionable
+  message if unmet.
+- `gemini` — `ChatGoogleGenerativeAI`; the only provider with no hardcoded default
+  model — requires `GEMINI_API_KEY` + (`--model` or `GEMINI_LLM_MODEL`).
+- `openai` — `ChatOpenAI`; requires `OPENAI_API_KEY` (reused from RAG embeddings, not a
+  separate key); default model `gpt-4o-mini`.
+- `anthropic` — `ChatAnthropic` (new dependency: `langchain-anthropic`); requires
+  `ANTHROPIC_API_KEY`; default model `claude-3-5-haiku-latest`.
+- `ollama` — `ChatOllama`; no cloud key, but checks Ollama is reachable and the model
+  is pulled (mirrors `rag/embeddings.py`'s `_get_ollama_embeddings()` exactly), failing
+  fast with the exact `ollama pull <model>` fix if not; default model `llama3.2:3b`.
+  At **invocation** time (not just this startup check), `ollama`/`langchain_ollama`
+  raise builtin `ConnectionError` on an unreachable server and `ollama.ResponseError`
+  on other API errors — both are caught explicitly in `main.py`/`api/main.py` alongside
+  `openai.OpenAIError`/`anthropic.AnthropicError`, next to the pre-existing
+  Gemini-specific catches, before the final generic `Exception` fallback.
+- `--model` overrides the model name for whichever provider is active (previously
+  Gemini-only). `--llm-provider` (CLI flag) overrides `LLM_PROVIDER` for the process.
+- `chain_builder.py` no longer constructs the chat model directly — `build_llm()` was
+  removed; `llm_provider.get_llm()` is the single code path for building it, called
+  from `main.py`'s `build_chain()`/`build_agent_graph()` and `api/main.py`'s
+  `lifespan()`.
+
 ## Run
 
 ```bash
-python main.py           # normal mode
-python main.py --rag     # RAG mode — retrieves context from docs/, cites sources
-python main.py --agent   # agent mode — tools with human-in-the-loop approval
+python main.py                          # normal mode (Gemini by default)
+python main.py --rag                    # RAG mode — retrieves context from docs/, cites sources
+python main.py --agent                  # agent mode — tools with human-in-the-loop approval
+python main.py --llm-provider ollama    # switch chat model provider at runtime
 ```
 
 Exit the chat by submitting an empty prompt. `--agent` and `--rag` cannot be combined.
@@ -172,7 +213,8 @@ ruff format .        # format
 - `main.py` — CLI entry point; runs the chat loop. `build_chain(model_override, rag_enabled)` switches between the plain chain and the RAG-augmented chain (see "RAG pipeline" above), delegating the actual LCEL/RAG-bootstrap construction to `chain_builder.py` / `rag/bootstrap.py`. `--agent` runs a separate loop (`run_agent_turn`) driving `agent.graph.AgentGraph` instead
 - `api/` — REST API entry point (see "REST API (Phase 3)" and "LangGraph agent (Phase 4)" above): `api/main.py` (FastAPI app + lifespan startup), `api/auth.py` (JWT issuance/verification), `api/rate_limit.py` (shared slowapi `Limiter`), `api/models.py` (Pydantic request/response models)
 - `agent/` — LangGraph agent module: `agent/tools.py` (`web_search`, `calculator`, `read_doc`), `agent/graph.py` (`AgentGraph` — graph construction, interrupt/checkpoint-based approval, shared by `main.py` and `api/main.py`); see "LangGraph agent (Phase 4)" above
-- `chain_builder.py` — shared LCEL chain construction (Gemini model constructor, prompt templates, RAG citation formatting) used by both `main.py` and `api/main.py`
+- `chain_builder.py` — shared LCEL chain construction (prompt templates, RAG citation formatting) used by both `main.py` and `api/main.py`; the chat model itself is built by `llm_provider.get_llm()` (see "LLM provider selection" above), not by this module
+- `llm_provider.py` — `LLM_PROVIDER` dispatch (gemini/openai/anthropic/ollama); see "LLM provider selection" above
 - `rag/bootstrap.py` — shared RAG vector-store bootstrap (`build_rag_store()`) used by both entry points; embeddings-provider failures are fatal (`sys.exit`) for the CLI's opt-in `--rag`, but `api/main.py`'s lifespan catches that and degrades to `rag_store=None` instead, since `/chat` doesn't need embeddings at all
 - `constants.py` — holds `SYSTEM_PROMPT` (Polish, bracketed placeholders like `[NAZWA FIRMY]` are intentional — customize before deploying) and the RAG-specific constants (`DOCS_DIR`, `CHROMA_PERSIST_DIR`, `RAG_TOP_K`, `RAG_SYSTEM_PROMPT_SUFFIX`)
 - `rag/` — RAG pipeline module (loader, chunker, embeddings, store, retriever, bootstrap); see "RAG pipeline" above

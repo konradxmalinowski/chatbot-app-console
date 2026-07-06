@@ -31,13 +31,14 @@
 
 ## Overview
 
-`chatbot-app` is a learning-oriented project that demonstrates how to wire a production-style conversational AI using LangChain's LCEL (LangChain Expression Language) with Google Gemini as the LLM backend. Conversation history is persisted between sessions as JSON, the model can be swapped at runtime via a CLI flag, and the terminal UX is handled by `rich`.
+`chatbot-app` is a learning-oriented project that demonstrates how to wire a production-style conversational AI using LangChain's LCEL (LangChain Expression Language). The LLM backend defaults to Google Gemini but is pluggable — OpenAI, Anthropic, and local Ollama are also supported via `--llm-provider`/`LLM_PROVIDER`. Conversation history is persisted between sessions as JSON, the model can be swapped at runtime via a CLI flag, and the terminal UX is handled by `rich`.
 
 ---
 
 ## Features
 
-- **Model selection** — choose any Gemini model at runtime via `--model`; default is read from `.env`
+- **Multi-provider LLM selection** — choose the chat model backend at runtime via `--llm-provider` (or the `LLM_PROVIDER` env var): Gemini (default), OpenAI, Anthropic, or local Ollama
+- **Model selection** — choose any model at runtime via `--model` (works with whichever provider is active); default is read from `.env`
 - **Session persistence** — conversation history is saved to `sessions/` as JSON and automatically restored on next run
 - **Rich terminal output** — colored prompts and formatted responses via the `rich` library
 - **Input validation** — rejects inputs exceeding 2 000 characters with a clear error message
@@ -82,26 +83,35 @@ cp .env.example .env
 
 | Variable | Required | Description |
 |---|---|---|
-| `GEMINI_API_KEY` | Yes | Google AI Studio API key |
-| `GEMINI_LLM_MODEL` | Yes | Gemini model name (e.g. `gemini-2.5-flash`) |
+| `LLM_PROVIDER` | No | Chat model backend: `gemini` (default), `openai`, `anthropic`, or `ollama` |
+| `GEMINI_API_KEY` | Only if `LLM_PROVIDER=gemini` (the default) | Google AI Studio API key |
+| `GEMINI_LLM_MODEL` | Only if `LLM_PROVIDER=gemini`, unless `--model` is passed | Gemini model name (e.g. `gemini-2.5-flash`) |
+| `OPENAI_API_KEY` | Only if `LLM_PROVIDER=openai` or `EMBEDDINGS_PROVIDER=openai` | OpenAI API key — shared by chat and RAG embeddings |
+| `ANTHROPIC_API_KEY` | Only if `LLM_PROVIDER=anthropic` | Anthropic API key |
 | `EMBEDDINGS_PROVIDER` | No | Embeddings backend for `--rag`: `ollama` (default, local) or `openai` |
-| `OPENAI_API_KEY` | Only if `EMBEDDINGS_PROVIDER=openai` | OpenAI API key for embeddings |
 | `API_SECRET` | Only for the REST API | Pre-shared secret exchanged for a JWT via `POST /auth/token` |
 | `JWT_SECRET_KEY` | Only for the REST API | Signs issued JWTs (HS256); must differ from `API_SECRET` |
 | `CORS_ORIGINS` | Only for the REST API | Comma-separated allowed origins; unset = none allowed (fail closed) |
 
 Copy `.env.example` to `.env` and fill in the values you need. Never commit `.env`. Generate secrets with `openssl rand -hex 32`.
 
+Ollama (`LLM_PROVIDER=ollama` or `EMBEDDINGS_PROVIDER=ollama`) requires no cloud key, but does require [Ollama](https://ollama.com/download) running locally with the relevant model pulled — the app fails fast with the exact `ollama pull <model>` command if it isn't.
+
 ---
 
 ## Usage
 
 ```bash
-# Start the chatbot with the model defined in .env
+# Start the chatbot with the provider/model defined in .env (defaults to Gemini)
 python main.py
 
-# Override the model at runtime
+# Override the model at runtime (works with whichever provider is active)
 python main.py --model gemini-1.5-pro
+
+# Switch LLM provider at runtime (overrides LLM_PROVIDER)
+python main.py --llm-provider ollama
+python main.py --llm-provider openai --model gpt-4o-mini
+python main.py --llm-provider anthropic --model claude-3-5-haiku-latest
 
 # Enable RAG mode — answers are grounded in docs/, with source citations
 python main.py --rag
@@ -202,6 +212,7 @@ chatbot-app/
 ├── api/                  # REST API entry point: FastAPI app, JWT auth, rate limiting
 ├── agent/                # LangGraph agent: tools (web search, calculator, read_doc), graph
 ├── chain_builder.py      # LCEL chain construction shared by main.py and api/
+├── llm_provider.py       # LLM_PROVIDER dispatch: gemini/openai/anthropic/ollama chat model construction
 ├── constants.py          # SYSTEM_PROMPT, DEFAULT_SESSION_ID, MAX_INPUT_LENGTH, RAG/agent constants
 ├── session_store.py      # JSON session persistence utilities
 ├── rag/                  # RAG pipeline: loader, chunker, embeddings, store, retriever, bootstrap

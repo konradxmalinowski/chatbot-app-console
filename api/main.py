@@ -11,7 +11,6 @@ first use of a given session_id and persisted back after every turn.
 
 import logging
 import os
-import sys
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -22,6 +21,9 @@ load_dotenv()
 
 from typing import Annotated  # noqa: E402
 
+import anthropic  # noqa: E402
+import ollama  # noqa: E402
+import openai  # noqa: E402
 from fastapi import Depends, FastAPI, HTTPException, Path, Request, Response, status  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from google.api_core.exceptions import GoogleAPIError, PermissionDenied  # noqa: E402
@@ -49,9 +51,10 @@ from api.models import (  # noqa: E402
     SourceCitation,
 )
 from api.rate_limit import limiter  # noqa: E402
-from chain_builder import build_base_chain, build_llm, build_rag_answer_chain  # noqa: E402
+from chain_builder import build_base_chain, build_rag_answer_chain  # noqa: E402
 from chain_builder import format_retrieved_context  # noqa: E402
 from constants import RAG_TOP_K, SESSIONS_DIR  # noqa: E402
+from llm_provider import get_llm  # noqa: E402
 from rag.bootstrap import build_rag_store  # noqa: E402
 from session_store import load_session, save_session  # noqa: E402
 
@@ -77,23 +80,6 @@ _state: dict = {
 # reuses ChatRequest's session_id validation pattern, since pending_id IS the
 # session_id (a session has at most one outstanding approval at a time).
 SessionIdPath = Annotated[str, Path(pattern=SESSION_ID_PATTERN)]
-
-
-def _validate_env() -> tuple[str, str]:
-    """Read and validate required environment variables. Exits on failure, matching
-    main.py's fail-fast style for a missing Gemini API key/model.
-    """
-    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-    model = os.environ.get("GEMINI_LLM_MODEL", "").strip()
-
-    if not api_key or not model:
-        logger.error(
-            "Missing required env var(s): GEMINI_API_KEY and/or GEMINI_LLM_MODEL. "
-            "Copy .env.example to .env and fill them in."
-        )
-        sys.exit(1)
-
-    return api_key, model
 
 
 def _get_or_create_history(
@@ -153,6 +139,24 @@ def _invoke_chain_safely(chain, chain_input: dict, session_id: str) -> str:
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Upstream LLM error — the model provider rejected the request.",
         ) from None
+    except openai.OpenAIError as exc:
+        logger.error("OpenAI API error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream LLM error — the model provider rejected the request.",
+        ) from None
+    except anthropic.AnthropicError as exc:
+        logger.error("Anthropic API error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream LLM error — the model provider rejected the request.",
+        ) from None
+    except (ConnectionError, ollama.ResponseError) as exc:
+        logger.error("Ollama error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream LLM error — the model provider rejected the request.",
+        ) from None
     except Exception:
         logger.exception("Unexpected error during chat turn.")
         raise HTTPException(
@@ -188,6 +192,24 @@ def _run_agent_step_safely(step_fn, *args, **kwargs) -> None:
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Upstream LLM error — the model provider rejected the request.",
         ) from None
+    except openai.OpenAIError as exc:
+        logger.error("OpenAI API error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream LLM error — the model provider rejected the request.",
+        ) from None
+    except anthropic.AnthropicError as exc:
+        logger.error("Anthropic API error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream LLM error — the model provider rejected the request.",
+        ) from None
+    except (ConnectionError, ollama.ResponseError) as exc:
+        logger.error("Ollama error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream LLM error — the model provider rejected the request.",
+        ) from None
     except Exception:
         logger.exception("Unexpected error during agent turn.")
         raise HTTPException(
@@ -216,8 +238,7 @@ def _agent_status_response(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    api_key, model = _validate_env()
-    llm = build_llm(api_key, model)
+    llm = get_llm()
 
     # RAG store initialization can fail fast (sys.exit) on a broken embeddings
     # backend (see rag/embeddings.py) — appropriate for the CLI's opt-in --rag flag,

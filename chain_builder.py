@@ -1,23 +1,19 @@
 """Shared LangChain LCEL chain construction for the CLI (``main.py``) and the REST
 API (``api/main.py``).
 
-Keeps the prompt templates, the Gemini model constructor, and the RAG
-citation-formatting logic in one place so both entry points build byte-for-byte
-identical prompts, rather than maintaining two copies that could quietly drift.
+Keeps the prompt templates and the RAG citation-formatting logic in one place so
+both entry points build byte-for-byte identical prompts, rather than maintaining
+two copies that could quietly drift. The chat model itself is built by
+``llm_provider.get_llm()`` (see that module) — this file no longer constructs it
+directly, so there is exactly one code path for building the chat model.
 """
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
-from langchain_google_genai import ChatGoogleGenerativeAI
 
 from constants import RAG_SYSTEM_PROMPT_SUFFIX, RAG_TOP_K, SYSTEM_PROMPT
-
-
-def build_llm(api_key: str, model_name: str) -> ChatGoogleGenerativeAI:
-    """Construct the Gemini chat model shared by both entry points."""
-    return ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key)
 
 
 def format_retrieved_context(chunks: list[Document]) -> str:
