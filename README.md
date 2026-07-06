@@ -251,7 +251,6 @@ chatbot-app/
 ├── .env.example            # Safe configuration template
 ├── requirements.txt        # Pinned runtime dependencies
 ├── requirements-dev.txt    # Pytest and Ruff
-├── PROJECT_RULES.md        # Repository conventions
 └── LICENSE                 # MIT license
 ```
 
