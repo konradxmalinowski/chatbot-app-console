@@ -13,8 +13,10 @@ sessions/
 # IDE config
 .idea/
 
-# Internal planning notes (raw developer notes; .planning/ stays tracked per D-06)
+# Internal planning/tooling notes — never published to the public remote (2026-07-06)
 plans/
+.planning/
+.claude/
 
 # Ruff cache
 .ruff_cache/
