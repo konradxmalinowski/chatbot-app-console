@@ -94,6 +94,10 @@
   <main class="docs-content">
     <div class="docs-eyebrow">Configuration</div>
     <h1 class="docs-h1">Configuration &amp; LLM Providers</h1>
+    <button class="copy-page-btn" onclick="copyPage(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>Copy Page</span>
+    </button>
     <p class="docs-lede"><code>llm_provider.py</code>'s <code>get_llm(model_override=None)</code> reads <code>LLM_PROVIDER</code> and dispatches to one <code>_get_&lt;provider&gt;_llm()</code> per provider — each validates only its own requirements and fails fast with an actionable message if something's missing.</p>
 
     <h2 id="env-vars">Environment variables</h2>
@@ -145,6 +149,15 @@
       <li>Switch providers at runtime — see <a href="/chatbot-app-console/docs/cli-reference/">CLI Reference</a> for <code>--llm-provider</code> and <code>--model</code>.</li>
     </ul>
   </main>
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-title">On this page</div>
+    <ul>
+      <li><a href="#env-vars">Environment variables</a></li>
+      <li><a href="#providers">Provider dispatch</a></li>
+      <li><a href="#next">Next steps</a></li>
+    </ul>
+  </aside>
 </div>
 
 <script src="/chatbot-app-console/static/app.js"></script>

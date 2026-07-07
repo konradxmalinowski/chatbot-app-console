@@ -94,6 +94,10 @@
   <main class="docs-content">
     <div class="docs-eyebrow">API &amp; Agent</div>
     <h1 class="docs-h1">LangGraph Agent</h1>
+    <button class="copy-page-btn" onclick="copyPage(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>Copy Page</span>
+    </button>
     <p class="docs-lede"><code>--agent</code> (CLI) and <code>POST /agent</code> + approve/reject (API) run a LangGraph <code>StateGraph</code> with three tools, behind a <strong>mandatory</strong> human-in-the-loop gate: no tool ever executes without explicit approval, in either mode.</p>
 
     <h2 id="tools">The three tools</h2>
@@ -147,6 +151,19 @@
       <li>Understand the calculator and path-containment hardening in more depth — see <a href="/chatbot-app-console/docs/security/">Security</a>.</li>
     </ul>
   </main>
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-title">On this page</div>
+    <ul>
+      <li><a href="#tools">The three tools</a></li>
+      <li><a href="#graph">Graph &amp; approval gate</a></li>
+      <li><a href="#cli-flow">CLI flow</a></li>
+      <li><a href="#api-flow">API flow</a></li>
+      <li><a href="#calculator-safety">Calculator cost bound</a></li>
+      <li><a href="#logging">Audit log</a></li>
+      <li><a href="#next">Next steps</a></li>
+    </ul>
+  </aside>
 </div>
 
 <script src="/chatbot-app-console/static/app.js"></script>

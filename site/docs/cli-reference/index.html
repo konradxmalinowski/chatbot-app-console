@@ -94,11 +94,19 @@
   <main class="docs-content">
     <div class="docs-eyebrow">Reference</div>
     <h1 class="docs-h1">CLI Reference</h1>
+    <button class="copy-page-btn" onclick="copyPage(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>Copy Page</span>
+    </button>
     <p class="docs-lede">The CLI uses the fixed session ID <code>1</code> — normal and RAG conversations are persisted in <code>sessions/1.json</code>. Agent mode keeps its graph state in memory. <code>--rag</code> and <code>--agent</code> cannot be combined.</p>
 
     <h2 id="usage">Usage</h2>
+    <div class="code-caption">Common invocations of the CLI entry point</div>
     <div class="code-block">
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
       <pre><span class="cmt"># Use the provider and model configured in .env</span>
 <span class="cmd">python</span> <span class="str">src/main.py</span>
 
@@ -140,6 +148,16 @@
       <li>See the three agent tools and the approval prompt — <a href="/chatbot-app-console/docs/langgraph-agent/">LangGraph Agent</a>.</li>
     </ul>
   </main>
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-title">On this page</div>
+    <ul>
+      <li><a href="#usage">Usage</a></li>
+      <li><a href="#flags">Flags</a></li>
+      <li><a href="#exit">Exiting</a></li>
+      <li><a href="#next">Next steps</a></li>
+    </ul>
+  </aside>
 </div>
 
 <script src="/chatbot-app-console/static/app.js"></script>

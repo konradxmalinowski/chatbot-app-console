@@ -94,6 +94,10 @@
   <main class="docs-content">
     <div class="docs-eyebrow">Configuration</div>
     <h1 class="docs-h1">RAG Pipeline</h1>
+    <button class="copy-page-btn" onclick="copyPage(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>Copy Page</span>
+    </button>
     <p class="docs-lede"><code>--rag</code> retrieves relevant passages from local files in <code>docs/</code> and adds them to the model prompt, citing every grounded claim. It's opt-in and additive — plain <code>python src/main.py</code> is unaffected.</p>
 
     <h2 id="stages">Pipeline stages</h2>
@@ -130,8 +134,12 @@
     </div>
 
     <h2 id="running">Preparing embeddings</h2>
+    <div class="code-caption">Pull the local embedding model and start in RAG mode</div>
     <div class="code-block">
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
       <pre><span class="cmt"># Default local embedding model</span>
 <span class="cmd">ollama pull</span> <span class="str">nomic-embed-text</span>
 <span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--rag</span></pre>
@@ -145,6 +153,17 @@
       <li>Switch embeddings provider — see <a href="/chatbot-app-console/docs/configuration/"><code>EMBEDDINGS_PROVIDER</code> in Configuration</a>.</li>
     </ul>
   </main>
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-title">On this page</div>
+    <ul>
+      <li><a href="#stages">Pipeline stages</a></li>
+      <li><a href="#citations">Citations</a></li>
+      <li><a href="#fallback">Fallback behavior</a></li>
+      <li><a href="#running">Preparing embeddings</a></li>
+      <li><a href="#next">Next steps</a></li>
+    </ul>
+  </aside>
 </div>
 
 <script src="/chatbot-app-console/static/app.js"></script>

@@ -94,6 +94,10 @@
   <main class="docs-content">
     <div class="docs-eyebrow">Documentation</div>
     <h1 class="docs-h1">chatbot-app Docs</h1>
+    <button class="copy-page-btn" onclick="copyPage(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>Copy Page</span>
+    </button>
     <p class="docs-lede">An educational, multi-provider conversational AI stack built with LangChain and LangGraph — a CLI, a FastAPI service, optional local RAG, and an agent whose tool calls always require human approval.</p>
 
     <h2 id="what-is-it">What is chatbot-app?</h2>
@@ -136,6 +140,13 @@
       </a>
     </div>
   </main>
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-title">On this page</div>
+    <ul>
+      <li><a href="#what-is-it">What is chatbot-app?</a></li>
+    </ul>
+  </aside>
 </div>
 
 <script src="/chatbot-app-console/static/app.js"></script>

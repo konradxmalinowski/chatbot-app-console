@@ -94,11 +94,19 @@
   <main class="docs-content">
     <div class="docs-eyebrow">API &amp; Agent</div>
     <h1 class="docs-h1">REST API Reference</h1>
+    <button class="copy-page-btn" onclick="copyPage(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>Copy Page</span>
+    </button>
     <p class="docs-lede">A FastAPI app in <code>api/</code> exposes the same chat/RAG functionality over HTTP, as an additional entry point alongside the CLI. The CLI is unaffected by it.</p>
 
     <h2 id="start">Starting the API</h2>
+    <div class="code-caption">Start the API with auto-reload</div>
     <div class="code-block">
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
       <pre><span class="cmd">uvicorn</span> <span class="str">api.main:app</span> <span class="kw">--reload</span> <span class="kw">--app-dir</span> <span class="str">src</span></pre>
     </div>
     <p><code>GET /docs</code> serves the automatic Swagger UI.</p>
@@ -132,8 +140,12 @@
     </div>
 
     <h2 id="example">Example</h2>
+    <div class="code-caption">Authenticate once, then send a chat message</div>
     <div class="code-block">
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
       <pre><span class="cmt"># Exchange the pre-shared secret for a JWT</span>
 <span class="cmd">TOKEN</span>=$(<span class="cmd">curl</span> <span class="kw">--silent --request POST</span> <span class="url">http://127.0.0.1:8000/auth/token</span> \
   <span class="kw">--header</span> <span class="str">"Content-Type: application/json"</span> \
@@ -154,6 +166,19 @@
       <li>See the hardening behind these routes — <a href="/chatbot-app-console/docs/security/">Security</a>.</li>
     </ul>
   </main>
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-title">On this page</div>
+    <ul>
+      <li><a href="#start">Starting the API</a></li>
+      <li><a href="#endpoints">Endpoints</a></li>
+      <li><a href="#validation">Request validation</a></li>
+      <li><a href="#sessions">Multi-session history</a></li>
+      <li><a href="#rate-limiting">Rate limiting design</a></li>
+      <li><a href="#example">Example</a></li>
+      <li><a href="#next">Next steps</a></li>
+    </ul>
+  </aside>
 </div>
 
 <script src="/chatbot-app-console/static/app.js"></script>

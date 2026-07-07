@@ -94,6 +94,10 @@
   <main class="docs-content">
     <div class="docs-eyebrow">Reference</div>
     <h1 class="docs-h1">Security</h1>
+    <button class="copy-page-btn" onclick="copyPage(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>Copy Page</span>
+    </button>
     <p class="docs-lede">chatbot-app is an educational reference app, not a hardened production service — but the pieces that touch trust boundaries (auth, file paths, arbitrary-looking expressions, cross-origin requests) are deliberately defensive.</p>
 
     <h2 id="properties">Security properties</h2>
@@ -148,6 +152,17 @@
       <li>See the approval gate in detail — <a href="/chatbot-app-console/docs/langgraph-agent/">LangGraph Agent</a>.</li>
     </ul>
   </main>
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-title">On this page</div>
+    <ul>
+      <li><a href="#properties">Security properties</a></li>
+      <li><a href="#fail-fast">Fail-fast configuration</a></li>
+      <li><a href="#prompt-injection">Prompt-injection framing on web_search</a></li>
+      <li><a href="#known-limitations">Known, accepted limitations</a></li>
+      <li><a href="#next">Next steps</a></li>
+    </ul>
+  </aside>
 </div>
 
 <script src="/chatbot-app-console/static/app.js"></script>

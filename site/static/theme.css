@@ -566,19 +566,55 @@
     .copy-btn {
       position: absolute;
       top: 0.65rem; right: 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
       background: #2a2a2a;
       border: 1px solid var(--border-hover);
       color: var(--muted);
-      font-size: 0.72rem;
-      padding: 0.25rem 0.55rem;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s;
       font-family: inherit;
     }
 
+    .copy-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
     .copy-btn:hover { color: var(--text); background: #333; }
     .copy-btn.copied { color: var(--safe); border-color: var(--safe); }
+
+    /* Small muted caption line above a .code-block explaining its purpose,
+       instead of relying only on a preceding paragraph (docs pages). */
+    .code-caption {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    /* "Copy Page" pill button, placed right under a docs page's H1. */
+    .copy-page-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 1.5rem;
+      padding: 0.4rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+
+    .copy-page-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .copy-page-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .copy-page-btn.copied { color: var(--safe); border-color: var(--safe); }
 
     .kw   { color: #a78bfa; }
     .str  { color: #fbbf24; }
@@ -1375,13 +1411,23 @@
       max-width: 680px;
     }
 
-    .docs-content p code, .docs-content li code {
-      background: var(--bg-code);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 0.1rem 0.35rem;
+    .docs-content p code,
+    .docs-content li code,
+    .docs-content td code,
+    .docs-content div code,
+    .owasp-desc code,
+    .teaser-desc code,
+    .card-desc code,
+    .sec-desc code,
+    .format-desc code,
+    .scenario-desc code,
+    .section-sub code {
+      background: #262626;
+      border: none;
+      border-radius: 5px;
+      padding: 0.15rem 0.4rem;
       font-size: 0.85em;
-      color: var(--accent);
+      color: #e5e5e5;
     }
 
     .docs-content ul, .docs-content ol {
@@ -1394,6 +1440,17 @@
     .docs-content .code-block { margin-bottom: 1.25rem; }
 
     .docs-content a { color: var(--accent); }
+
+    /* Prose links (paragraphs, list items, table cells, callouts) are underlined
+       for scannability, matching developers.openai.com's docs style. Card links
+       (.docs-home-card), nav links, and buttons are intentionally excluded. */
+    .docs-content p a,
+    .docs-content li a,
+    .docs-content td a,
+    .docs-callout a {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
 
     .docs-content.docs-content-embedded {
       width: 100%;
@@ -1447,6 +1504,44 @@
     .docs-home-card-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
 
     .docs-mobile-toggle { display: none; }
+
+    /* ── Docs: right-side "On this page" TOC ─────────────────────
+       Progressive enhancement — hidden by default, only shown once the
+       viewport is wide enough for a comfortable third column (see the
+       min-width media query further down, which also widens .docs-shell
+       to a 3-column grid). The h2 content it links to is already present
+       in the main flow either way. */
+    .docs-toc { display: none; }
+
+    .docs-toc-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.85rem;
+    }
+
+    .docs-toc ul { list-style: none; display: flex; flex-direction: column; gap: 0.1rem; }
+
+    .docs-toc a {
+      display: block;
+      padding: 0.35rem 0 0.35rem 0.85rem;
+      border-left: 2px solid transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.4;
+      text-decoration: none;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .docs-toc a:hover { color: var(--text); }
+
+    .docs-toc a.active {
+      color: var(--text);
+      border-left-color: var(--accent);
+      font-weight: 600;
+    }
 
     @media (max-width: 900px) {
       .docs-shell { grid-template-columns: 1fr; }
@@ -2001,4 +2096,46 @@
       .trust-strip { width: calc(100% - 40px); margin: 0 20px; padding: 20px; }
       .scan-preview-panel { border-top: 1px solid var(--border); border-left: 0; }
       body:has(.docs-shell) { padding-top: var(--nav-h); }
+    }
+
+    /* ── Flatter provider grid + teaser cards ─────────────────────
+       Quiets the colorful accent borders/badges these grids inherited from
+       .owasp-* — a subtle uniform border, no accent glow, no colored badge
+       fill. Card layout/content is unchanged. */
+    .owasp-card,
+    .teaser-card {
+      border-color: #242424;
+    }
+
+    .owasp-card:hover,
+    .teaser-card:hover {
+      border-color: #333;
+    }
+
+    .owasp-badge {
+      border: none;
+      background: #1e1e1e;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .owasp-payloads {
+      color: var(--muted);
+    }
+
+    /* ── Docs: reveal the "On this page" TOC as a third column once there's
+       comfortably enough width for it (sidebar + content + TOC). Below this,
+       .docs-toc stays display:none from the base rule above. */
+    @media (min-width: 1280px) {
+      .docs-shell { grid-template-columns: 220px minmax(0, 1fr) 240px; }
+
+      .docs-toc {
+        display: block;
+        position: sticky;
+        top: var(--nav-h);
+        align-self: start;
+        height: calc(100vh - var(--nav-h));
+        overflow-y: auto;
+        padding: 28px 24px 28px 8px;
+      }
     }

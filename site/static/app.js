@@ -2,16 +2,52 @@
     const block = btn.closest('.code-block');
     const pre = block.querySelector('pre');
     const text = pre.textContent || pre.innerText;
+    const iconCopy = btn.querySelector('.icon-copy');
+    const iconCheck = btn.querySelector('.icon-check');
     navigator.clipboard.writeText(text.trim()).then(() => {
-      btn.textContent = 'Copied!';
       btn.classList.add('copied');
+      btn.setAttribute('aria-label', 'Copied!');
+      if (iconCopy) iconCopy.hidden = true;
+      if (iconCheck) iconCheck.hidden = false;
       setTimeout(() => {
-        btn.textContent = 'Copy';
         btn.classList.remove('copied');
+        btn.setAttribute('aria-label', 'Copy code');
+        if (iconCopy) iconCopy.hidden = false;
+        if (iconCheck) iconCheck.hidden = true;
       }, 1800);
     }).catch(() => {
       const range = document.createRange();
       range.selectNodeContents(pre);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+  }
+
+  // ── Docs: "Copy Page" — copies the visible text of the whole article ──
+  function copyPage(btn) {
+    const content = btn.closest('.docs-content');
+    if (!content) return;
+    const label = btn.querySelector('span');
+    const originalLabel = label ? label.textContent : '';
+
+    // Hide the button itself before reading innerText so its own "Copy Page"
+    // label isn't included in the copied article text.
+    const prevDisplay = btn.style.display;
+    btn.style.display = 'none';
+    const text = (content.innerText || content.textContent || '').trim();
+    btn.style.display = prevDisplay;
+
+    navigator.clipboard.writeText(text).then(() => {
+      btn.classList.add('copied');
+      if (label) label.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        if (label) label.textContent = originalLabel;
+      }, 1800);
+    }).catch(() => {
+      const range = document.createRange();
+      range.selectNodeContents(content);
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
@@ -64,6 +100,70 @@
       link.classList.add('active');
     }
   });
+
+  // ── Docs: "On this page" TOC scroll-spy ──
+  // The homepage's section-nav observer above works because each <section>
+  // spans nearly the full viewport, so exactly one is ever "in the band" at
+  // a time. Docs h2 headings are much closer together (several can fit in
+  // one screen), so a narrow mid-viewport intersection band leaves long
+  // stretches of scroll where nothing is entering/leaving it — the active
+  // link would get stuck on whichever heading last crossed that band. A
+  // resize/IntersectionObserver-driven recompute that scans every heading's
+  // current position (instead of trusting only the single entry that fired)
+  // avoids that: it always derives "active" fresh from layout, so it can't
+  // go stale even after a large, instantaneous scroll.
+  const docsToc = document.querySelector('.docs-toc');
+  if (docsToc) {
+    const tocHeadings = Array.from(document.querySelectorAll('.docs-content h2[id]'));
+    const tocLinks = Array.from(docsToc.querySelectorAll('a[href^="#"]'));
+
+    if (tocHeadings.length && tocLinks.length) {
+      const setActiveTocLink = (id) => {
+        tocLinks.forEach((link) => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      };
+
+      const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 64;
+
+      const updateActiveHeading = () => {
+        // Special-case the bottom of the page: the last heading's own
+        // scroll-margin-top may leave it unable to reach the reference line
+        // if there isn't enough content below it to keep scrolling past —
+        // without this, the final section could never become "active".
+        const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+        if (atBottom) {
+          setActiveTocLink(tocHeadings[tocHeadings.length - 1].id);
+          return;
+        }
+
+        const referenceLine = navH + 24;
+        let current = tocHeadings[0];
+        for (const heading of tocHeadings) {
+          if (heading.getBoundingClientRect().top <= referenceLine) {
+            current = heading;
+          } else {
+            break;
+          }
+        }
+        setActiveTocLink(current.id);
+      };
+
+      let tocTicking = false;
+      const onDocsScroll = () => {
+        if (tocTicking) return;
+        tocTicking = true;
+        requestAnimationFrame(() => {
+          updateActiveHeading();
+          tocTicking = false;
+        });
+      };
+
+      window.addEventListener('scroll', onDocsScroll, { passive: true });
+      window.addEventListener('resize', onDocsScroll);
+      updateActiveHeading();
+    }
+  }
 
   // ── Docs: simple client-side filter for the sidebar search box ──
   const docsSearchInput = document.getElementById('docs-search-input');

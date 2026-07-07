@@ -94,14 +94,22 @@
   <main class="docs-content">
     <div class="docs-eyebrow">Overview</div>
     <h1 class="docs-h1">Getting Started</h1>
+    <button class="copy-page-btn" onclick="copyPage(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>Copy Page</span>
+    </button>
     <p class="docs-lede">Set up a virtual environment, install dependencies, configure one provider, and run your first chat. Everything runs locally except the provider's own API call.</p>
 
     <h2 id="prerequisites">Prerequisites</h2>
     <p>Python 3.11 or later, <code>pip</code> and the standard-library <code>venv</code> module, and credentials for one cloud model provider — or a local <a href="https://ollama.com/download" target="_blank" rel="noopener noreferrer">Ollama</a> installation.</p>
 
     <h2 id="install">1 — Install dependencies</h2>
+    <div class="code-caption">Create a virtual environment and install runtime + dev dependencies</div>
     <div class="code-block">
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
       <pre><span class="cmt"># Create and activate a virtual environment</span>
 <span class="cmd">python -m venv</span> <span class="str">.venv</span>
 <span class="cmd">source</span> <span class="str">.venv/bin/activate</span>  <span class="cmt"># Windows: .venv\Scripts\activate</span>
@@ -114,8 +122,12 @@
     </div>
 
     <h2 id="configure">2 — Configure a provider</h2>
+    <div class="code-caption">Copy the environment template</div>
     <div class="code-block">
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
       <pre><span class="cmt"># Copy the template and fill in one provider's credentials</span>
 <span class="cmd">cp</span> <span class="str">.env.example .env</span></pre>
     </div>
@@ -127,13 +139,21 @@
     </div>
 
     <h2 id="first-run">3 — Run your first chat</h2>
+    <div class="code-caption">Run the CLI with the provider configured in .env</div>
     <div class="code-block">
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
       <pre><span class="cmd">python</span> <span class="str">src/main.py</span></pre>
     </div>
     <p>Submit an empty prompt to exit. To run fully locally instead, switch to Ollama and pull the default chat model first:</p>
+    <div class="code-caption">Run fully offline with a local Ollama model</div>
     <div class="code-block">
-      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
       <pre><span class="cmd">ollama pull</span> <span class="str">llama3.2:3b</span>
 <span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--llm-provider</span> <span class="str">ollama</span></pre>
     </div>
@@ -146,6 +166,17 @@
       <li>Look up any CLI flag — see <a href="/chatbot-app-console/docs/cli-reference/">CLI Reference</a>.</li>
     </ul>
   </main>
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-title">On this page</div>
+    <ul>
+      <li><a href="#prerequisites">Prerequisites</a></li>
+      <li><a href="#install">1 — Install dependencies</a></li>
+      <li><a href="#configure">2 — Configure a provider</a></li>
+      <li><a href="#first-run">3 — Run your first chat</a></li>
+      <li><a href="#next">Next steps</a></li>
+    </ul>
+  </aside>
 </div>
 
 <script src="/chatbot-app-console/static/app.js"></script>

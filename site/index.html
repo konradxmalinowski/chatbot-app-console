@@ -233,7 +233,10 @@
   <p class="section-sub">Prerequisites: Python 3.11+ and a credential for one cloud provider — or a local <a href="https://ollama.com/" style="color:var(--accent); text-decoration:underline;" target="_blank" rel="noopener noreferrer">Ollama</a> install.</p>
 
   <div class="code-block" style="max-width:720px;">
-    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">
+      <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><polyline points="20 6 9 17 4 12"/></svg>
+    </button>
     <pre><span class="cmt"># 1. Create and activate a virtual environment</span>
 <span class="cmd">python -m venv</span> <span class="str">.venv</span>
 <span class="cmd">source</span> <span class="str">.venv/bin/activate</span>
