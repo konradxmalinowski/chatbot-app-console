@@ -16,9 +16,11 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import Runnable
 
 # Test-only secrets. These are simulated via monkeypatch.setenv — they never touch
-# the real .env file and are not real credentials for any provider.
+# the real .env file and are not real credentials for any provider. Both must be
+# at least 32 chars and differ from each other to satisfy
+# api.auth.validate_secret_strength()'s startup guard (SEC-001/SEC-006).
 TEST_JWT_SECRET = "test-jwt-secret-do-not-use-in-prod"  # noqa: S105
-TEST_API_SECRET = "test-api-secret-value"  # noqa: S105
+TEST_API_SECRET = "test-api-secret-value-do-not-use-in-prod"  # noqa: S105
 JWT_ALGORITHM = "HS256"
 
 DEFAULT_MOCK_REPLY = "This is a deterministic mock response."

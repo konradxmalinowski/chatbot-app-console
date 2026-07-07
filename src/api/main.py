@@ -36,7 +36,7 @@ from slowapi.errors import RateLimitExceeded  # noqa: E402
 from slowapi.middleware import SlowAPIMiddleware  # noqa: E402
 
 from agent.graph import AgentGraph  # noqa: E402
-from api.auth import verify_token  # noqa: E402
+from api.auth import validate_secret_strength, verify_token  # noqa: E402
 from api.auth import router as auth_router  # noqa: E402
 from api.models import (  # noqa: E402
     AgentCompleteResponse,
@@ -238,6 +238,11 @@ def _agent_status_response(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Fail closed before anything else starts up: a weak or reused
+    # API_SECRET/JWT_SECRET_KEY is a total auth-bypass risk (SEC-001/SEC-006).
+    # See api/auth.py's validate_secret_strength() docstring.
+    validate_secret_strength()
+
     llm = get_llm()
 
     # RAG store initialization can fail fast (sys.exit) on a broken embeddings

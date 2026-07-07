@@ -70,19 +70,20 @@ class PendingToolCall:
     args: dict
 
 
-# Cap on how much of a tool result gets written to logs/agent.jsonl. Tool results
-# (e.g. read_doc returning a whole file's text) can be arbitrarily large; logging
-# them in full would duplicate document contents in plaintext into an unrotated
-# log outside DOCS_DIR's access boundary, and would let one read_doc/web_search
-# call bloat the log file unboundedly. The full result still reaches the LLM (and
-# the caller, via the eventual response) — only the *logged* copy is truncated.
+# Cap on how much of a tool result (or, since SEC-009, a tool's args) gets written
+# to logs/agent.jsonl. Both can be arbitrarily large — a tool result (e.g. read_doc
+# returning a whole file's text) or the args themselves (e.g. a long web_search
+# query) — logging either in full would duplicate content in plaintext into an
+# unrotated log outside DOCS_DIR's access boundary, and would let one call bloat
+# the log file unboundedly. The full result/args still reach the LLM (and the
+# caller, via the eventual response) — only the *logged* copy is truncated.
 _LOG_RESULT_MAX_CHARS = 500
 
 
-def _truncate_for_log(result: str | None) -> str | None:
-    if result is None or len(result) <= _LOG_RESULT_MAX_CHARS:
-        return result
-    return result[:_LOG_RESULT_MAX_CHARS] + f"...[truncated, {len(result)} chars total]"
+def _truncate_for_log(text: str | None) -> str | None:
+    if text is None or len(text) <= _LOG_RESULT_MAX_CHARS:
+        return text
+    return text[:_LOG_RESULT_MAX_CHARS] + f"...[truncated, {len(text)} chars total]"
 
 
 def _log_tool_attempt(
@@ -100,11 +101,15 @@ def _log_tool_attempt(
     """
     try:
         LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        # args are LLM-generated and unbounded in size (e.g. a long web_search
+        # query or calculator expression) — truncate the same way result already
+        # is, so one call can't bloat this unrotated, plaintext log file (SEC-009).
+        args_repr = json.dumps(args, ensure_ascii=False, default=str)
         entry = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "session_id": session_id,
             "tool": tool_name,
-            "args": args,
+            "args": _truncate_for_log(args_repr),
             "result": _truncate_for_log(result),
             "declined": declined,
             "approved_by": approved_by,

@@ -12,6 +12,8 @@ from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 from rich.console import Console
 
+from constants import MAX_DOCUMENT_FILE_SIZE_BYTES
+
 console = Console()
 
 SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".md"}
@@ -83,6 +85,20 @@ def load_documents(docs_dir: Path) -> list[dict]:
             console.print(
                 f"[yellow]Warning:[/] skipping unsupported file extension "
                 f"'{extension}' for {path.name}"
+            )
+            continue
+
+        try:
+            file_size = path.stat().st_size
+        except OSError as exc:
+            console.print(
+                f"[yellow]Warning:[/] skipping unreadable file {path.name}: {exc}"
+            )
+            continue
+        if file_size > MAX_DOCUMENT_FILE_SIZE_BYTES:
+            console.print(
+                f"[yellow]Warning:[/] skipping oversized file {path.name} "
+                f"({file_size} bytes > {MAX_DOCUMENT_FILE_SIZE_BYTES} byte limit)"
             )
             continue
 

@@ -24,9 +24,46 @@ logger = logging.getLogger(__name__)
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRES_IN_SECONDS = 3600
 
+# Minimum length (chars) for both API_SECRET and JWT_SECRET_KEY — see
+# validate_secret_strength() below. `openssl rand -hex 32` produces exactly 64
+# hex characters (32 bytes of entropy), well above this floor.
+MIN_SECRET_LENGTH = 32
+
 _security = HTTPBearer(auto_error=False)
 
 router = APIRouter()
+
+
+def validate_secret_strength() -> None:
+    """Fail closed at process startup if API_SECRET/JWT_SECRET_KEY are missing,
+    too short, or identical to each other.
+
+    Called once from api/main.py's lifespan(), not lazily from a request handler:
+    a weak/misconfigured signing key is a total auth-bypass risk (SEC-001) — an
+    attacker who obtains one valid JWT can brute-force a short key offline and
+    forge arbitrary tokens — and reusing the same value for both secrets
+    collapses the two-layer pre-shared-secret / signing-key design into one
+    (SEC-006): anyone who legitimately holds API_SECRET could sign their own
+    JWTs directly. Matches this codebase's fail-fast style used elsewhere for
+    env validation (e.g. main.py's CLI provider checks, CORS_ORIGINS in
+    api/main.py) — raises RuntimeError rather than degrading or warning.
+    """
+    api_secret = os.environ.get("API_SECRET", "")
+    jwt_secret = os.environ.get("JWT_SECRET_KEY", "")
+
+    for name, value in (("API_SECRET", api_secret), ("JWT_SECRET_KEY", jwt_secret)):
+        if len(value) < MIN_SECRET_LENGTH:
+            raise RuntimeError(
+                f"{name} must be at least {MIN_SECRET_LENGTH} characters long "
+                "(use: openssl rand -hex 32)."
+            )
+
+    if api_secret == jwt_secret:
+        raise RuntimeError(
+            "API_SECRET and JWT_SECRET_KEY must not be equal — using the same "
+            "value for both collapses the two-layer auth design (any client "
+            "that knows API_SECRET could sign its own JWTs)."
+        )
 
 
 def _get_api_secret() -> str:
@@ -114,7 +151,10 @@ def verify_token(
 
     try:
         jwt.decode(
-            credentials.credentials, _get_jwt_secret(), algorithms=[JWT_ALGORITHM]
+            credentials.credentials,
+            _get_jwt_secret(),
+            algorithms=[JWT_ALGORITHM],
+            options={"require": ["exp"]},
         )
     except jwt.PyJWTError:
         raise HTTPException(
