@@ -1,0 +1,30 @@
+name: release-please
+
+# On every push to main, release-please scans commits since the last release
+# (Conventional Commits: feat/fix/etc.) and keeps a standing "Release PR" up
+# to date with the next version bump + CHANGELOG. Merging that PR is what
+# actually cuts the git tag and GitHub Release — this mirrors the sibling
+# LLM Security Scanner project's release-please setup exactly.
+#
+# Deviation from that project: this repo has no PyPI/Docker publish workflow
+# that needs the resulting tag to trigger a further Actions run, so there's
+# no need for the fine-grained RELEASE_PLEASE_TOKEN PAT it uses — the default
+# GITHUB_TOKEN (via `github.token`, used implicitly when `token:` is omitted
+# below) is sufficient here. Add a PAT secret if a tag-triggered workflow
+# (e.g. a Docker publish) is added later.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v5
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
