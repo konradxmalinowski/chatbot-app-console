@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="chatbot-app logo">
+  <rect width="32" height="32" rx="6" fill="#0c0c0c"/>
+  <path d="M7 9 C7 7.3 8.3 6 10 6 H22 C23.7 6 25 7.3 25 9 V18 C25 19.7 23.7 21 22 21 H14.5 L9.5 25.5 V21 H10 C8.3 21 7 19.7 7 18 Z" fill="#60a5fa"/>
+  <circle cx="12.3" cy="13.3" r="1.6" fill="#0c0c0c"/>
+  <circle cx="16" cy="13.3" r="1.6" fill="#0c0c0c"/>
+  <circle cx="19.7" cy="13.3" r="1.6" fill="#0c0c0c"/>
+</svg>

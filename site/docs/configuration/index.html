@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration &amp; LLM Providers — chatbot-app</title>
+  <meta name="description" content="The full environment variable table for chatbot-app and how LLM_PROVIDER dispatches between Gemini, OpenAI, Anthropic, and Ollama.">
+  <link rel="canonical" href="https://konradxmalinowski.github.io/chatbot-app-console/docs/configuration/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="chatbot-app">
+  <meta property="og:title" content="Configuration &amp; LLM Providers — chatbot-app">
+  <meta property="og:description" content="The full environment variable table for chatbot-app and how LLM_PROVIDER dispatches between Gemini, OpenAI, Anthropic, and Ollama.">
+  <meta property="og:url" content="https://konradxmalinowski.github.io/chatbot-app-console/docs/configuration/">
+  <meta property="og:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="chatbot-app — Multi-provider LangChain reference app">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Configuration &amp; LLM Providers — chatbot-app">
+  <meta name="twitter:description" content="The full environment variable table for chatbot-app and how LLM_PROVIDER dispatches between Gemini, OpenAI, Anthropic, and Ollama.">
+  <meta name="twitter:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+
+  <meta name="theme-color" content="#0c0c0c">
+  <link rel="icon" type="image/svg+xml" href="/chatbot-app-console/static/favicon.svg">
+  <link rel="stylesheet" href="/chatbot-app-console/static/theme.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Configuration & LLM Providers — chatbot-app",
+    "description": "The full environment variable table for chatbot-app and how LLM_PROVIDER dispatches between Gemini, OpenAI, Anthropic, and Ollama.",
+    "url": "https://konradxmalinowski.github.io/chatbot-app-console/docs/configuration/",
+    "isPartOf": { "@type": "WebSite", "name": "chatbot-app", "url": "https://konradxmalinowski.github.io/chatbot-app-console/" }
+  }
+  </script>
+</head>
+<body>
+
+<header class="site-topbar">
+  <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="topbar-brand" href="/chatbot-app-console/">chatbot-app</a>
+  <div class="topbar-nav" role="navigation" aria-label="Primary navigation">
+    <a href="/chatbot-app-console/">Home</a>
+    <a href="/chatbot-app-console/docs/" class="active" data-kw="overview introduction chatbot-app langchain langgraph what is">Docs</a>
+    <a href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+  <div class="topbar-right">
+    <div class="docs-search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="docs-search-input" type="text" placeholder="Search docs" aria-label="Search documentation">
+    </div>
+    <a class="topbar-action" href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+  </div>
+</header>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div role="navigation" aria-label="Docs navigation">
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Overview</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/" data-kw="overview introduction chatbot-app langchain langgraph what is">Introduction</a></li>
+        <li><a href="/chatbot-app-console/docs/getting-started/" data-kw="install venv pip requirements env setup first run cli">Getting Started</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Configuration</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/configuration/" class="active" data-kw="llm provider gemini openai anthropic ollama env vars api key model">Configuration &amp; LLM Providers</a></li>
+        <li><a href="/chatbot-app-console/docs/rag-pipeline/" data-kw="rag retrieval chroma embeddings loader chunker docs citation source">RAG Pipeline</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">API &amp; Agent</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/rest-api/" data-kw="rest api fastapi jwt auth token chat session rate limit cors">REST API Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/langgraph-agent/" data-kw="langgraph agent tools web search calculator read doc approval human in the loop">LangGraph Agent</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Reference</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/cli-reference/" data-kw="cli flags rag agent llm provider model exit">CLI Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/security/" data-kw="security jwt secret path traversal ast calculator prompt injection rate limit">Security</a></li>
+      </ul>
+    </div>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+    <div class="docs-eyebrow">Configuration</div>
+    <h1 class="docs-h1">Configuration &amp; LLM Providers</h1>
+    <p class="docs-lede"><code>llm_provider.py</code>'s <code>get_llm(model_override=None)</code> reads <code>LLM_PROVIDER</code> and dispatches to one <code>_get_&lt;provider&gt;_llm()</code> per provider — each validates only its own requirements and fails fast with an actionable message if something's missing.</p>
+
+    <h2 id="env-vars">Environment variables</h2>
+    <div style="overflow-x:auto;">
+    <table class="cli-table">
+      <thead><tr><th>Variable</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="flag-cell">LLM_PROVIDER</td><td><code>gemini</code> (default), <code>openai</code>, <code>anthropic</code>, or <code>ollama</code> — chat model backend.</td></tr>
+        <tr><td class="flag-cell">GEMINI_API_KEY</td><td>Required when <code>LLM_PROVIDER=gemini</code> — Google AI Studio API key.</td></tr>
+        <tr><td class="flag-cell">GEMINI_LLM_MODEL</td><td>Required when <code>LLM_PROVIDER=gemini</code>, unless <code>--model</code> is passed.</td></tr>
+        <tr><td class="flag-cell">OPENAI_API_KEY</td><td>Required when <code>LLM_PROVIDER=openai</code> or <code>EMBEDDINGS_PROVIDER=openai</code> — same key covers both.</td></tr>
+        <tr><td class="flag-cell">ANTHROPIC_API_KEY</td><td>Required when <code>LLM_PROVIDER=anthropic</code>.</td></tr>
+        <tr><td class="flag-cell">EMBEDDINGS_PROVIDER</td><td><code>ollama</code> (default) or <code>openai</code> — embeddings backend for <code>--rag</code> (unrelated to <code>LLM_PROVIDER</code>).</td></tr>
+        <tr><td class="flag-cell">API_SECRET</td><td>REST API only — pre-shared secret exchanged for a JWT via <code>POST /auth/token</code>.</td></tr>
+        <tr><td class="flag-cell">JWT_SECRET_KEY</td><td>REST API only — signs issued JWTs (HS256); must differ from <code>API_SECRET</code>.</td></tr>
+        <tr><td class="flag-cell">CORS_ORIGINS</td><td>REST API only — comma-separated allowed origins; unset/empty = none allowed (fail closed).</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="docs-callout">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <div><code>GEMINI_API_KEY</code>/<code>GEMINI_LLM_MODEL</code> are only required while <code>LLM_PROVIDER</code> is unset or <code>gemini</code>. RAG variables are only needed with <code>--rag</code> (or the REST API, which builds the RAG store at startup regardless of a flag). Generate <code>API_SECRET</code>/<code>JWT_SECRET_KEY</code> independently with <code>openssl rand -hex 32</code> — never reuse one as the other.</div>
+    </div>
+
+    <h2 id="providers">Provider dispatch</h2>
+    <p>Each provider is a functionally separate concern from the RAG embeddings provider below — they are not interchangeable or merged, even though the dispatch pattern is structurally similar.</p>
+
+    <div style="overflow-x:auto;">
+    <table class="cli-table">
+      <thead><tr><th>Provider</th><th>Chat class</th><th>Requires</th><th>Default model</th></tr></thead>
+      <tbody>
+        <tr><td class="flag-cell">gemini</td><td>ChatGoogleGenerativeAI</td><td>GEMINI_API_KEY + (<code>--model</code> or GEMINI_LLM_MODEL)</td><td class="default-cell">none — must be set explicitly</td></tr>
+        <tr><td class="flag-cell">openai</td><td>ChatOpenAI</td><td>OPENAI_API_KEY (reused from RAG embeddings)</td><td class="default-cell">gpt-4o-mini</td></tr>
+        <tr><td class="flag-cell">anthropic</td><td>ChatAnthropic</td><td>ANTHROPIC_API_KEY (adds <code>langchain-anthropic</code>)</td><td class="default-cell">claude-3-5-haiku-latest</td></tr>
+        <tr><td class="flag-cell">ollama</td><td>ChatOllama</td><td>local server reachable + model pulled</td><td class="default-cell">llama3.2:3b</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p>The <code>ollama</code> provider has no cloud key, but checks that Ollama is reachable and the model is pulled before starting, failing fast with the exact <code>ollama pull &lt;model&gt;</code> fix if not. At invocation time, <code>ollama</code>/<code>langchain_ollama</code> raise a builtin <code>ConnectionError</code> on an unreachable server and <code>ollama.ResponseError</code> on other API errors — both are caught explicitly in <code>main.py</code>/<code>api/main.py</code> alongside <code>openai.OpenAIError</code>/<code>anthropic.AnthropicError</code>, next to the pre-existing Gemini-specific catches.</p>
+
+    <p><code>--model</code> overrides the model name for whichever provider is active. <code>--llm-provider</code> overrides <code>LLM_PROVIDER</code> for the process. <code>chain_builder.py</code> never constructs the chat model directly — <code>llm_provider.get_llm()</code> is the single code path for building it, called from both <code>main.py</code>'s <code>build_chain()</code>/<code>build_agent_graph()</code> and <code>api/main.py</code>'s <code>lifespan()</code>.</p>
+
+    <h2 id="next">Next steps</h2>
+    <ul>
+      <li>Ground answers in documents — see <a href="/chatbot-app-console/docs/rag-pipeline/">RAG Pipeline</a> for <code>EMBEDDINGS_PROVIDER</code> and the retrieval flow.</li>
+      <li>Wire this into the REST API — see <a href="/chatbot-app-console/docs/rest-api/">REST API Reference</a>.</li>
+      <li>Switch providers at runtime — see <a href="/chatbot-app-console/docs/cli-reference/">CLI Reference</a> for <code>--llm-provider</code> and <code>--model</code>.</li>
+    </ul>
+  </main>
+</div>
+
+<script src="/chatbot-app-console/static/app.js"></script>
+</body>
+</html>

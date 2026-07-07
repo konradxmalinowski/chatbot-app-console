@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security — chatbot-app</title>
+  <meta name="description" content="The hardening already shipped in chatbot-app — JWT secret-strength checks, path-traversal containment, an AST-restricted calculator, and fail-closed CORS.">
+  <link rel="canonical" href="https://konradxmalinowski.github.io/chatbot-app-console/docs/security/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="chatbot-app">
+  <meta property="og:title" content="Security — chatbot-app">
+  <meta property="og:description" content="The hardening already shipped in chatbot-app — JWT secret-strength checks, path-traversal containment, an AST-restricted calculator, and fail-closed CORS.">
+  <meta property="og:url" content="https://konradxmalinowski.github.io/chatbot-app-console/docs/security/">
+  <meta property="og:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="chatbot-app — Multi-provider LangChain reference app">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Security — chatbot-app">
+  <meta name="twitter:description" content="The hardening already shipped in chatbot-app — JWT secret-strength checks, path-traversal containment, an AST-restricted calculator, and fail-closed CORS.">
+  <meta name="twitter:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+
+  <meta name="theme-color" content="#0c0c0c">
+  <link rel="icon" type="image/svg+xml" href="/chatbot-app-console/static/favicon.svg">
+  <link rel="stylesheet" href="/chatbot-app-console/static/theme.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Security — chatbot-app",
+    "description": "The hardening already shipped in chatbot-app.",
+    "url": "https://konradxmalinowski.github.io/chatbot-app-console/docs/security/",
+    "isPartOf": { "@type": "WebSite", "name": "chatbot-app", "url": "https://konradxmalinowski.github.io/chatbot-app-console/" }
+  }
+  </script>
+</head>
+<body>
+
+<header class="site-topbar">
+  <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="topbar-brand" href="/chatbot-app-console/">chatbot-app</a>
+  <div class="topbar-nav" role="navigation" aria-label="Primary navigation">
+    <a href="/chatbot-app-console/">Home</a>
+    <a href="/chatbot-app-console/docs/" class="active" data-kw="overview introduction chatbot-app langchain langgraph what is">Docs</a>
+    <a href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+  <div class="topbar-right">
+    <div class="docs-search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="docs-search-input" type="text" placeholder="Search docs" aria-label="Search documentation">
+    </div>
+    <a class="topbar-action" href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+  </div>
+</header>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div role="navigation" aria-label="Docs navigation">
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Overview</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/" data-kw="overview introduction chatbot-app langchain langgraph what is">Introduction</a></li>
+        <li><a href="/chatbot-app-console/docs/getting-started/" data-kw="install venv pip requirements env setup first run cli">Getting Started</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Configuration</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/configuration/" data-kw="llm provider gemini openai anthropic ollama env vars api key model">Configuration &amp; LLM Providers</a></li>
+        <li><a href="/chatbot-app-console/docs/rag-pipeline/" data-kw="rag retrieval chroma embeddings loader chunker docs citation source">RAG Pipeline</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">API &amp; Agent</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/rest-api/" data-kw="rest api fastapi jwt auth token chat session rate limit cors">REST API Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/langgraph-agent/" data-kw="langgraph agent tools web search calculator read doc approval human in the loop">LangGraph Agent</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Reference</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/cli-reference/" data-kw="cli flags rag agent llm provider model exit">CLI Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/security/" class="active" data-kw="security jwt secret path traversal ast calculator prompt injection rate limit">Security</a></li>
+      </ul>
+    </div>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+    <div class="docs-eyebrow">Reference</div>
+    <h1 class="docs-h1">Security</h1>
+    <p class="docs-lede">chatbot-app is an educational reference app, not a hardened production service — but the pieces that touch trust boundaries (auth, file paths, arbitrary-looking expressions, cross-origin requests) are deliberately defensive.</p>
+
+    <h2 id="properties">Security properties</h2>
+    <div class="security-grid">
+      <div class="sec-card">
+        <div class="sec-icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="sec-title">Separate JWT and API secrets</div>
+        <div class="sec-desc"><code>JWT_SECRET_KEY</code> signs issued tokens (HS256) and must differ from <code>API_SECRET</code>, the pre-shared secret exchanged for a token via <code>POST /auth/token</code>. That exchange is rate limited to 5/min to slow brute-forcing.</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="sec-title">Path-traversal containment</div>
+        <div class="sec-desc"><code>session_id</code> is constrained to <code>^[a-zA-Z0-9_-]{1,64}$</code> before it ever reaches <code>session_store.py</code>, since it becomes part of a file path. The agent's <code>read_doc</code> tool is likewise confined to <code>docs/</code> and can't escape it.</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="12" x2="8.01" y2="12"/><line x1="12" y1="12" x2="12.01" y2="12"/><line x1="16" y1="12" x2="16.01" y2="12"/></svg></div>
+        <div class="sec-title">AST-restricted calculator</div>
+        <div class="sec-desc">No <code>eval</code>/<code>exec</code> — expressions are parsed to an AST and walked against an allowlist. <code>_check_pow_cost</code> also bounds <code>ast.Pow</code>'s result size via <code>log2</code> before evaluating, rejecting anything over <code>_MAX_POW_RESULT_BITS</code> so a request like <code>9**9**9</code> can't pin a CPU core computing a ~369-million-digit number.</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="sec-title">Mandatory tool approval</div>
+        <div class="sec-desc">Every agent tool call — <code>web_search</code>, <code>calculator</code>, <code>read_doc</code> — pauses on a LangGraph <code>interrupt_before=["tools"]</code> checkpoint. Nothing executes without explicit human approval, in the CLI or the API, and every attempt is logged to <code>logs/agent.jsonl</code>.</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div>
+        <div class="sec-title">Fail-closed CORS</div>
+        <div class="sec-desc"><code>CORS_ORIGINS</code> is comma-separated allowed origins; unset or empty means <strong>none</strong> allowed, not a permissive wildcard default.</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div class="sec-title">ASGI-layer rate limiting</div>
+        <div class="sec-desc">Chat and agent routes carry no per-route <code>@limiter.limit</code> decorator on purpose — slowapi's <code>SlowAPIMiddleware</code> enforces <code>default_limits</code> before FastAPI resolves <code>Depends(verify_token)</code>, so unauthenticated requests can't slip past rate limiting. See <a href="/chatbot-app-console/docs/rest-api/">REST API Reference</a>.</div>
+      </div>
+    </div>
+
+    <h2 id="fail-fast">Fail-fast configuration</h2>
+    <p>Missing keys, unavailable local models, and incomplete <code>SYSTEM_PROMPT</code> placeholders are surfaced at startup rather than at request time. Each LLM provider validates only its own requirements (see <a href="/chatbot-app-console/docs/configuration/">Configuration &amp; LLM Providers</a>), and the Polish <code>SYSTEM_PROMPT</code> in <code>constants.py</code> must have every bracketed placeholder replaced before the app will start.</p>
+
+    <h2 id="prompt-injection">Prompt-injection framing on web_search</h2>
+    <p>Search results are untrusted, model-facing text by construction — content returned by <code>web_search</code> can contain instructions crafted to manipulate the model. The tool's output is treated as data to reason about, not as instructions to follow, and every tool call (including <code>web_search</code>) still requires human approval before it runs at all.</p>
+
+    <h2 id="known-limitations">Known, accepted limitations</h2>
+    <div class="docs-callout">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <div>The CLI uses one hardcoded session ID and is not a multi-user client. API authentication identifies one shared service client, not individual users — any valid token can address any valid <code>session_id</code> or <code>pending_id</code>. The local JSON session store isn't designed for concurrent distributed workers. Agent checkpoints and pending approvals don't survive process restarts (in-memory <code>MemorySaver</code>). RAG indexing is local and requires an explicit index rebuild after corpus changes.</div>
+    </div>
+
+    <h2 id="next">Next steps</h2>
+    <ul>
+      <li>See the full endpoint and auth surface — <a href="/chatbot-app-console/docs/rest-api/">REST API Reference</a>.</li>
+      <li>See the approval gate in detail — <a href="/chatbot-app-console/docs/langgraph-agent/">LangGraph Agent</a>.</li>
+    </ul>
+  </main>
+</div>
+
+<script src="/chatbot-app-console/static/app.js"></script>
+</body>
+</html>

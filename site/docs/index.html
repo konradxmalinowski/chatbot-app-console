@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Introduction — chatbot-app</title>
+  <meta name="description" content="Documentation for chatbot-app — a multi-provider LangChain/LangGraph reference app with a CLI, REST API, optional RAG, and an approval-gated agent.">
+  <link rel="canonical" href="https://konradxmalinowski.github.io/chatbot-app-console/docs/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="chatbot-app">
+  <meta property="og:title" content="Introduction — chatbot-app">
+  <meta property="og:description" content="Documentation for chatbot-app — a multi-provider LangChain/LangGraph reference app with a CLI, REST API, optional RAG, and an approval-gated agent.">
+  <meta property="og:url" content="https://konradxmalinowski.github.io/chatbot-app-console/docs/">
+  <meta property="og:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="chatbot-app — Multi-provider LangChain reference app">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Introduction — chatbot-app">
+  <meta name="twitter:description" content="Documentation for chatbot-app — a multi-provider LangChain/LangGraph reference app with a CLI, REST API, optional RAG, and an approval-gated agent.">
+  <meta name="twitter:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+
+  <meta name="theme-color" content="#0c0c0c">
+  <link rel="icon" type="image/svg+xml" href="/chatbot-app-console/static/favicon.svg">
+  <link rel="stylesheet" href="/chatbot-app-console/static/theme.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Introduction — chatbot-app",
+    "description": "Documentation for chatbot-app — a multi-provider LangChain/LangGraph reference app with a CLI, REST API, optional RAG, and an approval-gated agent.",
+    "url": "https://konradxmalinowski.github.io/chatbot-app-console/docs/",
+    "isPartOf": { "@type": "WebSite", "name": "chatbot-app", "url": "https://konradxmalinowski.github.io/chatbot-app-console/" }
+  }
+  </script>
+</head>
+<body>
+
+<header class="site-topbar">
+  <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="topbar-brand" href="/chatbot-app-console/">chatbot-app</a>
+  <div class="topbar-nav" role="navigation" aria-label="Primary navigation">
+    <a href="/chatbot-app-console/">Home</a>
+    <a href="/chatbot-app-console/docs/" class="active" data-kw="overview introduction chatbot-app langchain langgraph what is">Docs</a>
+    <a href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+  <div class="topbar-right">
+    <div class="docs-search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="docs-search-input" type="text" placeholder="Search docs" aria-label="Search documentation">
+    </div>
+    <a class="topbar-action" href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+  </div>
+</header>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div role="navigation" aria-label="Docs navigation">
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Overview</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/" class="active" data-kw="overview introduction chatbot-app langchain langgraph what is">Introduction</a></li>
+        <li><a href="/chatbot-app-console/docs/getting-started/" data-kw="install venv pip requirements env setup first run cli">Getting Started</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Configuration</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/configuration/" data-kw="llm provider gemini openai anthropic ollama env vars api key model">Configuration &amp; LLM Providers</a></li>
+        <li><a href="/chatbot-app-console/docs/rag-pipeline/" data-kw="rag retrieval chroma embeddings loader chunker docs citation source">RAG Pipeline</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">API &amp; Agent</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/rest-api/" data-kw="rest api fastapi jwt auth token chat session rate limit cors">REST API Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/langgraph-agent/" data-kw="langgraph agent tools web search calculator read doc approval human in the loop">LangGraph Agent</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Reference</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/cli-reference/" data-kw="cli flags rag agent llm provider model exit">CLI Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/security/" data-kw="security jwt secret path traversal ast calculator prompt injection rate limit">Security</a></li>
+      </ul>
+    </div>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+    <div class="docs-eyebrow">Documentation</div>
+    <h1 class="docs-h1">chatbot-app Docs</h1>
+    <p class="docs-lede">An educational, multi-provider conversational AI stack built with LangChain and LangGraph — a CLI, a FastAPI service, optional local RAG, and an agent whose tool calls always require human approval.</p>
+
+    <h2 id="what-is-it">What is chatbot-app?</h2>
+    <p><code>chatbot-app</code> is a single-session, in-memory CLI chatbot with a pluggable chat model backend — Gemini by default, with OpenAI, Anthropic, or local Ollama also supported. It exposes the same core LangChain Expression Language (LCEL) chain through two interfaces: an interactive Rich-powered terminal client and a FastAPI REST service.</p>
+    <p>Three optional layers sit on top of the base chat flow:</p>
+    <ul>
+      <li><strong>Retrieval-augmented generation</strong> — <code>--rag</code> grounds answers in local documents from <code>docs/</code> via a persisted ChromaDB vector store, with citations.</li>
+      <li><strong>A REST API</strong> — JWT-authenticated, rate-limited endpoints for chat, RAG, and the agent, with per-session JSON-backed history.</li>
+      <li><strong>A LangGraph agent</strong> — <code>--agent</code> gives the model three tools (<code>web_search</code>, <code>calculator</code>, <code>read_doc</code>), gated behind a mandatory human-in-the-loop approval step. No tool ever executes without explicit approval, in either the CLI or the API.</li>
+    </ul>
+
+    <div class="docs-home-grid">
+      <a class="docs-home-card" href="/chatbot-app-console/docs/getting-started/">
+        <div class="docs-home-card-title">Getting Started</div>
+        <div class="docs-home-card-desc">Set up a virtual environment, install dependencies, configure a provider, and run your first chat.</div>
+      </a>
+      <a class="docs-home-card" href="/chatbot-app-console/docs/configuration/">
+        <div class="docs-home-card-title">Configuration &amp; LLM Providers</div>
+        <div class="docs-home-card-desc">The full environment variable table and the Gemini / OpenAI / Anthropic / Ollama provider dispatch.</div>
+      </a>
+      <a class="docs-home-card" href="/chatbot-app-console/docs/rag-pipeline/">
+        <div class="docs-home-card-title">RAG Pipeline</div>
+        <div class="docs-home-card-desc">Loader, chunker, embeddings, vector store, and retrieval — how <code>--rag</code> grounds answers with citations.</div>
+      </a>
+      <a class="docs-home-card" href="/chatbot-app-console/docs/rest-api/">
+        <div class="docs-home-card-title">REST API Reference</div>
+        <div class="docs-home-card-desc">Every endpoint, auth flow, rate limit, and validation rule behind the FastAPI service.</div>
+      </a>
+      <a class="docs-home-card" href="/chatbot-app-console/docs/langgraph-agent/">
+        <div class="docs-home-card-title">LangGraph Agent</div>
+        <div class="docs-home-card-desc">The three tools, the mandatory approval gate, and the CLI vs. API approve/reject flows.</div>
+      </a>
+      <a class="docs-home-card" href="/chatbot-app-console/docs/cli-reference/">
+        <div class="docs-home-card-title">CLI Reference</div>
+        <div class="docs-home-card-desc">Every flag <code>src/main.py</code> understands, and how to exit a session.</div>
+      </a>
+      <a class="docs-home-card" href="/chatbot-app-console/docs/security/">
+        <div class="docs-home-card-title">Security</div>
+        <div class="docs-home-card-desc">JWT secret handling, path-traversal containment, the AST-restricted calculator, and rate-limit design.</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<script src="/chatbot-app-console/static/app.js"></script>
+</body>
+</html>

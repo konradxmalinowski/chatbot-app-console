@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started — chatbot-app</title>
+  <meta name="description" content="Set up a virtual environment, install dependencies, configure a provider, and run your first chatbot-app session.">
+  <link rel="canonical" href="https://konradxmalinowski.github.io/chatbot-app-console/docs/getting-started/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="chatbot-app">
+  <meta property="og:title" content="Getting Started — chatbot-app">
+  <meta property="og:description" content="Set up a virtual environment, install dependencies, configure a provider, and run your first chatbot-app session.">
+  <meta property="og:url" content="https://konradxmalinowski.github.io/chatbot-app-console/docs/getting-started/">
+  <meta property="og:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="chatbot-app — Multi-provider LangChain reference app">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Getting Started — chatbot-app">
+  <meta name="twitter:description" content="Set up a virtual environment, install dependencies, configure a provider, and run your first chatbot-app session.">
+  <meta name="twitter:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+
+  <meta name="theme-color" content="#0c0c0c">
+  <link rel="icon" type="image/svg+xml" href="/chatbot-app-console/static/favicon.svg">
+  <link rel="stylesheet" href="/chatbot-app-console/static/theme.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Getting Started — chatbot-app",
+    "description": "Set up a virtual environment, install dependencies, configure a provider, and run your first chatbot-app session.",
+    "url": "https://konradxmalinowski.github.io/chatbot-app-console/docs/getting-started/",
+    "isPartOf": { "@type": "WebSite", "name": "chatbot-app", "url": "https://konradxmalinowski.github.io/chatbot-app-console/" }
+  }
+  </script>
+</head>
+<body>
+
+<header class="site-topbar">
+  <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="topbar-brand" href="/chatbot-app-console/">chatbot-app</a>
+  <div class="topbar-nav" role="navigation" aria-label="Primary navigation">
+    <a href="/chatbot-app-console/">Home</a>
+    <a href="/chatbot-app-console/docs/" class="active" data-kw="overview introduction chatbot-app langchain langgraph what is">Docs</a>
+    <a href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+  <div class="topbar-right">
+    <div class="docs-search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="docs-search-input" type="text" placeholder="Search docs" aria-label="Search documentation">
+    </div>
+    <a class="topbar-action" href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+  </div>
+</header>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div role="navigation" aria-label="Docs navigation">
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Overview</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/" data-kw="overview introduction chatbot-app langchain langgraph what is">Introduction</a></li>
+        <li><a href="/chatbot-app-console/docs/getting-started/" class="active" data-kw="install venv pip requirements env setup first run cli">Getting Started</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Configuration</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/configuration/" data-kw="llm provider gemini openai anthropic ollama env vars api key model">Configuration &amp; LLM Providers</a></li>
+        <li><a href="/chatbot-app-console/docs/rag-pipeline/" data-kw="rag retrieval chroma embeddings loader chunker docs citation source">RAG Pipeline</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">API &amp; Agent</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/rest-api/" data-kw="rest api fastapi jwt auth token chat session rate limit cors">REST API Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/langgraph-agent/" data-kw="langgraph agent tools web search calculator read doc approval human in the loop">LangGraph Agent</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Reference</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/cli-reference/" data-kw="cli flags rag agent llm provider model exit">CLI Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/security/" data-kw="security jwt secret path traversal ast calculator prompt injection rate limit">Security</a></li>
+      </ul>
+    </div>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+    <div class="docs-eyebrow">Overview</div>
+    <h1 class="docs-h1">Getting Started</h1>
+    <p class="docs-lede">Set up a virtual environment, install dependencies, configure one provider, and run your first chat. Everything runs locally except the provider's own API call.</p>
+
+    <h2 id="prerequisites">Prerequisites</h2>
+    <p>Python 3.11 or later, <code>pip</code> and the standard-library <code>venv</code> module, and credentials for one cloud model provider — or a local <a href="https://ollama.com/download" target="_blank" rel="noopener noreferrer">Ollama</a> installation.</p>
+
+    <h2 id="install">1 — Install dependencies</h2>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><span class="cmt"># Create and activate a virtual environment</span>
+<span class="cmd">python -m venv</span> <span class="str">.venv</span>
+<span class="cmd">source</span> <span class="str">.venv/bin/activate</span>  <span class="cmt"># Windows: .venv\Scripts\activate</span>
+
+<span class="cmt"># Install runtime dependencies</span>
+<span class="cmd">pip install -r</span> <span class="str">requirements.txt</span>
+
+<span class="cmt"># Optional: dev tools (ruff, pytest)</span>
+<span class="cmd">pip install -r</span> <span class="str">requirements-dev.txt</span></pre>
+    </div>
+
+    <h2 id="configure">2 — Configure a provider</h2>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><span class="cmt"># Copy the template and fill in one provider's credentials</span>
+<span class="cmd">cp</span> <span class="str">.env.example .env</span></pre>
+    </div>
+    <p>The example configuration uses Gemini (<code>GEMINI_API_KEY</code> + <code>GEMINI_LLM_MODEL</code>). See <a href="/chatbot-app-console/docs/configuration/">Configuration &amp; LLM Providers</a> for the full variable table and every provider's requirements.</p>
+
+    <div class="docs-callout">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <div>Before running the app, replace every bracketed placeholder in <code>SYSTEM_PROMPT</code> (<code>src/constants.py</code>) — the project name, assistant goal, supported topics, contact path, and preferred form of address. Startup validation stops the app while any placeholder remains unresolved.</div>
+    </div>
+
+    <h2 id="first-run">3 — Run your first chat</h2>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><span class="cmd">python</span> <span class="str">src/main.py</span></pre>
+    </div>
+    <p>Submit an empty prompt to exit. To run fully locally instead, switch to Ollama and pull the default chat model first:</p>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><span class="cmd">ollama pull</span> <span class="str">llama3.2:3b</span>
+<span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--llm-provider</span> <span class="str">ollama</span></pre>
+    </div>
+
+    <h2 id="next">Next steps</h2>
+    <ul>
+      <li>Ground answers in your own documents — see <a href="/chatbot-app-console/docs/rag-pipeline/">RAG Pipeline</a>.</li>
+      <li>Expose the same chat logic over HTTP — see <a href="/chatbot-app-console/docs/rest-api/">REST API Reference</a>.</li>
+      <li>Let the model use tools, with your approval — see <a href="/chatbot-app-console/docs/langgraph-agent/">LangGraph Agent</a>.</li>
+      <li>Look up any CLI flag — see <a href="/chatbot-app-console/docs/cli-reference/">CLI Reference</a>.</li>
+    </ul>
+  </main>
+</div>
+
+<script src="/chatbot-app-console/static/app.js"></script>
+</body>
+</html>

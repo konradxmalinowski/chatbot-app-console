@@ -8,6 +8,9 @@
 <p align="center">
   A multi-provider conversational AI reference app with a CLI, REST API, local RAG, persistent sessions, and approval-gated tools.
 </p>
+<p align="center">
+  <a href="https://konradxmalinowski.github.io/chatbot-app-console/">Developer docs</a>
+</p>
 
 ---
 
@@ -247,6 +250,7 @@ chatbot-app/
 │   ├── agent/              # LangGraph workflow and approval-gated tools
 │   └── rag/                # Loading, chunking, embeddings, retrieval, and storage
 ├── docs/                   # Source documents for RAG and read_doc
+├── site/                   # Developer docs site, deployed to GitHub Pages on every push to main
 ├── reports/                # Project reports
 ├── .env.example            # Safe configuration template
 ├── requirements.txt        # Pinned runtime dependencies

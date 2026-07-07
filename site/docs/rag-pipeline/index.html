@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAG Pipeline — chatbot-app</title>
+  <meta name="description" content="How chatbot-app's --rag mode loads, chunks, embeds, and retrieves local documents with ChromaDB, and cites its sources.">
+  <link rel="canonical" href="https://konradxmalinowski.github.io/chatbot-app-console/docs/rag-pipeline/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="chatbot-app">
+  <meta property="og:title" content="RAG Pipeline — chatbot-app">
+  <meta property="og:description" content="How chatbot-app's --rag mode loads, chunks, embeds, and retrieves local documents with ChromaDB, and cites its sources.">
+  <meta property="og:url" content="https://konradxmalinowski.github.io/chatbot-app-console/docs/rag-pipeline/">
+  <meta property="og:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="chatbot-app — Multi-provider LangChain reference app">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RAG Pipeline — chatbot-app">
+  <meta name="twitter:description" content="How chatbot-app's --rag mode loads, chunks, embeds, and retrieves local documents with ChromaDB, and cites its sources.">
+  <meta name="twitter:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+
+  <meta name="theme-color" content="#0c0c0c">
+  <link rel="icon" type="image/svg+xml" href="/chatbot-app-console/static/favicon.svg">
+  <link rel="stylesheet" href="/chatbot-app-console/static/theme.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "RAG Pipeline — chatbot-app",
+    "description": "How chatbot-app's --rag mode loads, chunks, embeds, and retrieves local documents with ChromaDB, and cites its sources.",
+    "url": "https://konradxmalinowski.github.io/chatbot-app-console/docs/rag-pipeline/",
+    "isPartOf": { "@type": "WebSite", "name": "chatbot-app", "url": "https://konradxmalinowski.github.io/chatbot-app-console/" }
+  }
+  </script>
+</head>
+<body>
+
+<header class="site-topbar">
+  <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="topbar-brand" href="/chatbot-app-console/">chatbot-app</a>
+  <div class="topbar-nav" role="navigation" aria-label="Primary navigation">
+    <a href="/chatbot-app-console/">Home</a>
+    <a href="/chatbot-app-console/docs/" class="active" data-kw="overview introduction chatbot-app langchain langgraph what is">Docs</a>
+    <a href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+  <div class="topbar-right">
+    <div class="docs-search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="docs-search-input" type="text" placeholder="Search docs" aria-label="Search documentation">
+    </div>
+    <a class="topbar-action" href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+  </div>
+</header>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div role="navigation" aria-label="Docs navigation">
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Overview</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/" data-kw="overview introduction chatbot-app langchain langgraph what is">Introduction</a></li>
+        <li><a href="/chatbot-app-console/docs/getting-started/" data-kw="install venv pip requirements env setup first run cli">Getting Started</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Configuration</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/configuration/" data-kw="llm provider gemini openai anthropic ollama env vars api key model">Configuration &amp; LLM Providers</a></li>
+        <li><a href="/chatbot-app-console/docs/rag-pipeline/" class="active" data-kw="rag retrieval chroma embeddings loader chunker docs citation source">RAG Pipeline</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">API &amp; Agent</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/rest-api/" data-kw="rest api fastapi jwt auth token chat session rate limit cors">REST API Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/langgraph-agent/" data-kw="langgraph agent tools web search calculator read doc approval human in the loop">LangGraph Agent</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Reference</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/cli-reference/" data-kw="cli flags rag agent llm provider model exit">CLI Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/security/" data-kw="security jwt secret path traversal ast calculator prompt injection rate limit">Security</a></li>
+      </ul>
+    </div>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+    <div class="docs-eyebrow">Configuration</div>
+    <h1 class="docs-h1">RAG Pipeline</h1>
+    <p class="docs-lede"><code>--rag</code> retrieves relevant passages from local files in <code>docs/</code> and adds them to the model prompt, citing every grounded claim. It's opt-in and additive — plain <code>python src/main.py</code> is unaffected.</p>
+
+    <h2 id="stages">Pipeline stages</h2>
+    <div class="steps" style="grid-template-columns:1fr;">
+      <div class="step" style="text-align:left; flex-direction:row; align-items:flex-start; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--border);">
+        <div class="step-num" style="margin-bottom:0;">01</div>
+        <div><h3 class="step-title">Load — <code>rag/loader.py</code></h3><div class="step-desc">Loads <code>.pdf</code> / <code>.txt</code> / <code>.md</code> files from <code>docs/</code>. Unsupported extensions and unreadable files are skipped with a logged warning, not fatal.</div></div>
+      </div>
+      <div class="step" style="text-align:left; flex-direction:row; align-items:flex-start; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--border);">
+        <div class="step-num" style="margin-bottom:0;">02</div>
+        <div><h3 class="step-title">Chunk — <code>rag/chunker.py</code></h3><div class="step-desc">Splits documents into overlapping chunks (<code>RecursiveCharacterTextSplitter</code>, 1000 chars / 200 overlap), tagging each with <code>source</code> and <code>chunk_index</code> metadata.</div></div>
+      </div>
+      <div class="step" style="text-align:left; flex-direction:row; align-items:flex-start; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--border);">
+        <div class="step-num" style="margin-bottom:0;">03</div>
+        <div><h3 class="step-title">Embed — <code>rag/embeddings.py</code></h3><div class="step-desc"><code>get_embeddings_provider()</code> reads <code>EMBEDDINGS_PROVIDER</code> (default <code>ollama</code>, model <code>nomic-embed-text</code>). <code>openai</code> uses <code>text-embedding-3-small</code> and requires <code>OPENAI_API_KEY</code>.</div></div>
+      </div>
+      <div class="step" style="text-align:left; flex-direction:row; align-items:flex-start; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--border);">
+        <div class="step-num" style="margin-bottom:0;">04</div>
+        <div><h3 class="step-title">Store — <code>rag/store.py</code></h3><div class="step-desc"><code>build_or_load()</code> wraps <code>langchain_chroma.Chroma</code>, persisted to <code>chroma_db/</code> (gitignored). Idempotent — an existing collection is loaded instead of re-embedded.</div></div>
+      </div>
+      <div class="step" style="text-align:left; flex-direction:row; align-items:flex-start; gap:1rem; padding:1rem 0;">
+        <div class="step-num" style="margin-bottom:0;">05</div>
+        <div><h3 class="step-title">Retrieve — <code>rag/retriever.py</code></h3><div class="step-desc"><code>retrieve(store, query, k=3)</code> returns the top-3 most relevant chunks for each request.</div></div>
+      </div>
+    </div>
+
+    <h2 id="citations">Citations</h2>
+    <p><code>constants.RAG_SYSTEM_PROMPT_SUFFIX</code> is appended to (never replaces) <code>SYSTEM_PROMPT</code> in RAG mode. It instructs the model to cite retrieved chunks as <code>[source: &lt;filename&gt;]</code> and to say it doesn't know rather than inventing a citation when nothing relevant was retrieved.</p>
+
+    <h2 id="fallback">Fallback behavior</h2>
+    <div class="docs-callout">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <div>If <code>docs/</code> has no usable content, the CLI's <code>--rag</code> prints a warning and falls back to normal mode rather than crashing. The REST API is different: it builds the RAG store at startup regardless of a flag, and <code>/chat/rag</code> returns <code>503</code> if that vector store never initialized.</div>
+    </div>
+
+    <h2 id="running">Preparing embeddings</h2>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><span class="cmt"># Default local embedding model</span>
+<span class="cmd">ollama pull</span> <span class="str">nomic-embed-text</span>
+<span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--rag</span></pre>
+    </div>
+    <p>Delete <code>chroma_db/</code> and restart the app when you need to rebuild the persisted index after changing the corpus. Add real <code>.pdf</code>/<code>.md</code>/<code>.txt</code> files to <code>docs/</code> — it currently ships with a placeholder <code>docs/sample-faq.md</code>.</p>
+
+    <h2 id="next">Next steps</h2>
+    <ul>
+      <li>Call this from the REST API — see <a href="/chatbot-app-console/docs/rest-api/"><code>POST /chat/rag</code> in REST API Reference</a>.</li>
+      <li>Let <code>read_doc</code> read the same <code>docs/</code> corpus from the agent — see <a href="/chatbot-app-console/docs/langgraph-agent/">LangGraph Agent</a>.</li>
+      <li>Switch embeddings provider — see <a href="/chatbot-app-console/docs/configuration/"><code>EMBEDDINGS_PROVIDER</code> in Configuration</a>.</li>
+    </ul>
+  </main>
+</div>
+
+<script src="/chatbot-app-console/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://konradxmalinowski.github.io/chatbot-app-console/sitemap.xml

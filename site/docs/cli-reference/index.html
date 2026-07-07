@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLI Reference — chatbot-app</title>
+  <meta name="description" content="Every flag src/main.py understands — --rag, --agent, --llm-provider, --model — and how to exit a chatbot-app session.">
+  <link rel="canonical" href="https://konradxmalinowski.github.io/chatbot-app-console/docs/cli-reference/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="chatbot-app">
+  <meta property="og:title" content="CLI Reference — chatbot-app">
+  <meta property="og:description" content="Every flag src/main.py understands — --rag, --agent, --llm-provider, --model — and how to exit a chatbot-app session.">
+  <meta property="og:url" content="https://konradxmalinowski.github.io/chatbot-app-console/docs/cli-reference/">
+  <meta property="og:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="chatbot-app — Multi-provider LangChain reference app">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CLI Reference — chatbot-app">
+  <meta name="twitter:description" content="Every flag src/main.py understands — --rag, --agent, --llm-provider, --model — and how to exit a chatbot-app session.">
+  <meta name="twitter:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+
+  <meta name="theme-color" content="#0c0c0c">
+  <link rel="icon" type="image/svg+xml" href="/chatbot-app-console/static/favicon.svg">
+  <link rel="stylesheet" href="/chatbot-app-console/static/theme.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "CLI Reference — chatbot-app",
+    "description": "Every flag src/main.py understands, and how to exit a chatbot-app session.",
+    "url": "https://konradxmalinowski.github.io/chatbot-app-console/docs/cli-reference/",
+    "isPartOf": { "@type": "WebSite", "name": "chatbot-app", "url": "https://konradxmalinowski.github.io/chatbot-app-console/" }
+  }
+  </script>
+</head>
+<body>
+
+<header class="site-topbar">
+  <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="topbar-brand" href="/chatbot-app-console/">chatbot-app</a>
+  <div class="topbar-nav" role="navigation" aria-label="Primary navigation">
+    <a href="/chatbot-app-console/">Home</a>
+    <a href="/chatbot-app-console/docs/" class="active" data-kw="overview introduction chatbot-app langchain langgraph what is">Docs</a>
+    <a href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+  <div class="topbar-right">
+    <div class="docs-search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="docs-search-input" type="text" placeholder="Search docs" aria-label="Search documentation">
+    </div>
+    <a class="topbar-action" href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+  </div>
+</header>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div role="navigation" aria-label="Docs navigation">
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Overview</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/" data-kw="overview introduction chatbot-app langchain langgraph what is">Introduction</a></li>
+        <li><a href="/chatbot-app-console/docs/getting-started/" data-kw="install venv pip requirements env setup first run cli">Getting Started</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Configuration</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/configuration/" data-kw="llm provider gemini openai anthropic ollama env vars api key model">Configuration &amp; LLM Providers</a></li>
+        <li><a href="/chatbot-app-console/docs/rag-pipeline/" data-kw="rag retrieval chroma embeddings loader chunker docs citation source">RAG Pipeline</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">API &amp; Agent</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/rest-api/" data-kw="rest api fastapi jwt auth token chat session rate limit cors">REST API Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/langgraph-agent/" data-kw="langgraph agent tools web search calculator read doc approval human in the loop">LangGraph Agent</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Reference</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/cli-reference/" class="active" data-kw="cli flags rag agent llm provider model exit">CLI Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/security/" data-kw="security jwt secret path traversal ast calculator prompt injection rate limit">Security</a></li>
+      </ul>
+    </div>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+    <div class="docs-eyebrow">Reference</div>
+    <h1 class="docs-h1">CLI Reference</h1>
+    <p class="docs-lede">The CLI uses the fixed session ID <code>1</code> — normal and RAG conversations are persisted in <code>sessions/1.json</code>. Agent mode keeps its graph state in memory. <code>--rag</code> and <code>--agent</code> cannot be combined.</p>
+
+    <h2 id="usage">Usage</h2>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><span class="cmt"># Use the provider and model configured in .env</span>
+<span class="cmd">python</span> <span class="str">src/main.py</span>
+
+<span class="cmt"># Select a provider and optionally override its model</span>
+<span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--llm-provider</span> <span class="str">openai</span> <span class="kw">--model</span> <span class="str">gpt-4o-mini</span>
+<span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--llm-provider</span> <span class="str">anthropic</span>
+<span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--llm-provider</span> <span class="str">ollama</span>
+
+<span class="cmt"># Ground answers in documents from docs/</span>
+<span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--rag</span>
+
+<span class="cmt"># Enable approval-gated tools</span>
+<span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--agent</span>
+
+<span class="cmt"># Show all CLI options</span>
+<span class="cmd">python</span> <span class="str">src/main.py</span> <span class="kw">--help</span></pre>
+    </div>
+
+    <h2 id="flags">Flags</h2>
+    <div style="overflow-x:auto;">
+    <table class="cli-table">
+      <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="flag-cell">--rag</td><td>Retrieve context from local documents in <code>docs/</code> and cite sources. Cannot be combined with <code>--agent</code>.</td></tr>
+        <tr><td class="flag-cell">--agent</td><td>Run the LangGraph agent with approval-gated tools instead of the plain chain. Cannot be combined with <code>--rag</code>.</td></tr>
+        <tr><td class="flag-cell">--llm-provider</td><td>Overrides <code>LLM_PROVIDER</code> for this process: <code>gemini</code>, <code>openai</code>, <code>anthropic</code>, or <code>ollama</code>.</td></tr>
+        <tr><td class="flag-cell">--model</td><td>Overrides the model name for whichever provider is active.</td></tr>
+        <tr><td class="flag-cell">--help</td><td>Shows all CLI options.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 id="exit">Exiting</h2>
+    <p>Submit an empty prompt to exit the chat loop. History for normal and RAG conversations is written to <code>sessions/1.json</code> on exit; agent mode's graph state does not persist between runs.</p>
+
+    <h2 id="next">Next steps</h2>
+    <ul>
+      <li>See what each provider requires — <a href="/chatbot-app-console/docs/configuration/">Configuration &amp; LLM Providers</a>.</li>
+      <li>See the three agent tools and the approval prompt — <a href="/chatbot-app-console/docs/langgraph-agent/">LangGraph Agent</a>.</li>
+    </ul>
+  </main>
+</div>
+
+<script src="/chatbot-app-console/static/app.js"></script>
+</body>
+</html>

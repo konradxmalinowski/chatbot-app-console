@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REST API Reference — chatbot-app</title>
+  <meta name="description" content="Endpoints, JWT auth, rate limits, and validation rules for chatbot-app's FastAPI service — /auth/token, /chat, /chat/rag, /agent, /health.">
+  <link rel="canonical" href="https://konradxmalinowski.github.io/chatbot-app-console/docs/rest-api/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="chatbot-app">
+  <meta property="og:title" content="REST API Reference — chatbot-app">
+  <meta property="og:description" content="Endpoints, JWT auth, rate limits, and validation rules for chatbot-app's FastAPI service — /auth/token, /chat, /chat/rag, /agent, /health.">
+  <meta property="og:url" content="https://konradxmalinowski.github.io/chatbot-app-console/docs/rest-api/">
+  <meta property="og:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="chatbot-app — Multi-provider LangChain reference app">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="REST API Reference — chatbot-app">
+  <meta name="twitter:description" content="Endpoints, JWT auth, rate limits, and validation rules for chatbot-app's FastAPI service — /auth/token, /chat, /chat/rag, /agent, /health.">
+  <meta name="twitter:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+
+  <meta name="theme-color" content="#0c0c0c">
+  <link rel="icon" type="image/svg+xml" href="/chatbot-app-console/static/favicon.svg">
+  <link rel="stylesheet" href="/chatbot-app-console/static/theme.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "REST API Reference — chatbot-app",
+    "description": "Endpoints, JWT auth, rate limits, and validation rules for chatbot-app's FastAPI service.",
+    "url": "https://konradxmalinowski.github.io/chatbot-app-console/docs/rest-api/",
+    "isPartOf": { "@type": "WebSite", "name": "chatbot-app", "url": "https://konradxmalinowski.github.io/chatbot-app-console/" }
+  }
+  </script>
+</head>
+<body>
+
+<header class="site-topbar">
+  <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="topbar-brand" href="/chatbot-app-console/">chatbot-app</a>
+  <div class="topbar-nav" role="navigation" aria-label="Primary navigation">
+    <a href="/chatbot-app-console/">Home</a>
+    <a href="/chatbot-app-console/docs/" class="active" data-kw="overview introduction chatbot-app langchain langgraph what is">Docs</a>
+    <a href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+  <div class="topbar-right">
+    <div class="docs-search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="docs-search-input" type="text" placeholder="Search docs" aria-label="Search documentation">
+    </div>
+    <a class="topbar-action" href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+  </div>
+</header>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div role="navigation" aria-label="Docs navigation">
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Overview</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/" data-kw="overview introduction chatbot-app langchain langgraph what is">Introduction</a></li>
+        <li><a href="/chatbot-app-console/docs/getting-started/" data-kw="install venv pip requirements env setup first run cli">Getting Started</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Configuration</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/configuration/" data-kw="llm provider gemini openai anthropic ollama env vars api key model">Configuration &amp; LLM Providers</a></li>
+        <li><a href="/chatbot-app-console/docs/rag-pipeline/" data-kw="rag retrieval chroma embeddings loader chunker docs citation source">RAG Pipeline</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">API &amp; Agent</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/rest-api/" class="active" data-kw="rest api fastapi jwt auth token chat session rate limit cors">REST API Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/langgraph-agent/" data-kw="langgraph agent tools web search calculator read doc approval human in the loop">LangGraph Agent</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Reference</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/cli-reference/" data-kw="cli flags rag agent llm provider model exit">CLI Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/security/" data-kw="security jwt secret path traversal ast calculator prompt injection rate limit">Security</a></li>
+      </ul>
+    </div>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+    <div class="docs-eyebrow">API &amp; Agent</div>
+    <h1 class="docs-h1">REST API Reference</h1>
+    <p class="docs-lede">A FastAPI app in <code>api/</code> exposes the same chat/RAG functionality over HTTP, as an additional entry point alongside the CLI. The CLI is unaffected by it.</p>
+
+    <h2 id="start">Starting the API</h2>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><span class="cmd">uvicorn</span> <span class="str">api.main:app</span> <span class="kw">--reload</span> <span class="kw">--app-dir</span> <span class="str">src</span></pre>
+    </div>
+    <p><code>GET /docs</code> serves the automatic Swagger UI.</p>
+
+    <h2 id="endpoints">Endpoints</h2>
+    <div style="overflow-x:auto;">
+    <table class="cli-table">
+      <thead><tr><th>Endpoint</th><th>Auth</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="flag-cell">POST /auth/token</td><td class="req-no">API_SECRET in body</td><td>Exchanges <code>API_SECRET</code> for a Bearer JWT valid for one hour. Rate limited to 5/min to slow brute-forcing.</td></tr>
+        <tr><td class="flag-cell">POST /chat</td><td class="req-yes">Bearer JWT</td><td>Runs a standard conversation turn. 20/min per token.</td></tr>
+        <tr><td class="flag-cell">POST /chat/rag</td><td class="req-yes">Bearer JWT</td><td>Runs a grounded turn and returns retrieved source excerpts. 20/min. Returns <code>503</code> if the RAG vector store never initialized.</td></tr>
+        <tr><td class="flag-cell">POST /agent</td><td class="req-yes">Bearer JWT</td><td>Starts or continues an agent turn until completion or approval is required. 20/min.</td></tr>
+        <tr><td class="flag-cell">POST /agent/{pending_id}/approve</td><td class="req-yes">Bearer JWT</td><td>Executes all pending tool calls and resumes the agent.</td></tr>
+        <tr><td class="flag-cell">POST /agent/{pending_id}/reject</td><td class="req-yes">Bearer JWT</td><td>Rejects the whole pending batch instead of executing it, and resumes without them.</td></tr>
+        <tr><td class="flag-cell">GET /health</td><td class="req-no">None</td><td>Reports <code>vector_store: "ready" | "not_initialized"</code>. Exempt from rate limiting — it's a monitoring endpoint.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 id="validation">Request validation</h2>
+    <p><code>session_id</code> is constrained to <code>^[a-zA-Z0-9_-]{1,64}$</code>. It becomes part of a file path in <code>session_store.py</code>, so this is a mandatory path-traversal guard, not just input hygiene. Messages must contain 1–2,000 characters and cannot be blank. Body shape: <code>{"message": str, "session_id": str}</code>.</p>
+
+    <h2 id="sessions">Multi-session history</h2>
+    <p>Unlike the CLI's single hardcoded <code>session_id="1"</code>, the API keeps one <code>InMemoryChatMessageHistory</code> per <code>session_id</code> per process, lazily loaded from <code>sessions/&lt;session_id&gt;.json</code> on first use and saved back after every turn. <code>/chat</code> and <code>/chat/rag</code> share the <strong>same</strong> history store keyed by <code>session_id</code> — a session is one continuous conversation regardless of which endpoint served a given turn.</p>
+
+    <h2 id="rate-limiting">Rate limiting design</h2>
+    <div class="docs-callout">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <div><code>/chat</code>, <code>/chat/rag</code>, and the agent routes have <strong>no per-route <code>@limiter.limit(...)</code> decorator</strong> — deliberately. slowapi's <code>SlowAPIMiddleware</code> (<code>api/rate_limit.py</code>) enforces <code>default_limits</code> at the ASGI layer, before FastAPI resolves <code>Depends(verify_token)</code>. A per-route decorator's check only runs <em>inside</em> the endpoint body, so a request with no or invalid token would never reach it and would go completely unrate-limited. <code>/auth/token</code> keeps its own decorator since it has no auth dependency that can fail first.</div>
+    </div>
+
+    <h2 id="example">Example</h2>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <pre><span class="cmt"># Exchange the pre-shared secret for a JWT</span>
+<span class="cmd">TOKEN</span>=$(<span class="cmd">curl</span> <span class="kw">--silent --request POST</span> <span class="url">http://127.0.0.1:8000/auth/token</span> \
+  <span class="kw">--header</span> <span class="str">"Content-Type: application/json"</span> \
+  <span class="kw">--data</span> <span class="str">'{"api_secret":"replace-with-api-secret"}'</span> \
+  | <span class="cmd">python -c</span> <span class="str">"import json,sys; print(json.load(sys.stdin)['access_token'])"</span>)
+
+<span class="cmt"># Send a chat message</span>
+<span class="cmd">curl</span> <span class="kw">--request POST</span> <span class="url">http://127.0.0.1:8000/chat</span> \
+  <span class="kw">--header</span> <span class="str">"Authorization: Bearer $TOKEN"</span> \
+  <span class="kw">--header</span> <span class="str">"Content-Type: application/json"</span> \
+  <span class="kw">--data</span> <span class="str">'{"message":"Hello","session_id":"demo"}'</span></pre>
+    </div>
+    <p>This authentication scheme is intended for service-to-service use. It identifies one shared service client, not individual users — any valid token holder can address any valid <code>session_id</code> or <code>pending_id</code>.</p>
+
+    <h2 id="next">Next steps</h2>
+    <ul>
+      <li>See the agent's two-step approve/reject flow — <a href="/chatbot-app-console/docs/langgraph-agent/">LangGraph Agent</a>.</li>
+      <li>See the hardening behind these routes — <a href="/chatbot-app-console/docs/security/">Security</a>.</li>
+    </ul>
+  </main>
+</div>
+
+<script src="/chatbot-app-console/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LangGraph Agent — chatbot-app</title>
+  <meta name="description" content="The three approval-gated agent tools in chatbot-app — web_search, calculator, read_doc — and the mandatory human-in-the-loop flow.">
+  <link rel="canonical" href="https://konradxmalinowski.github.io/chatbot-app-console/docs/langgraph-agent/">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="chatbot-app">
+  <meta property="og:title" content="LangGraph Agent — chatbot-app">
+  <meta property="og:description" content="The three approval-gated agent tools in chatbot-app — web_search, calculator, read_doc — and the mandatory human-in-the-loop flow.">
+  <meta property="og:url" content="https://konradxmalinowski.github.io/chatbot-app-console/docs/langgraph-agent/">
+  <meta property="og:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="chatbot-app — Multi-provider LangChain reference app">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="LangGraph Agent — chatbot-app">
+  <meta name="twitter:description" content="The three approval-gated agent tools in chatbot-app — web_search, calculator, read_doc — and the mandatory human-in-the-loop flow.">
+  <meta name="twitter:image" content="https://konradxmalinowski.github.io/chatbot-app-console/static/og-image.png">
+
+  <meta name="theme-color" content="#0c0c0c">
+  <link rel="icon" type="image/svg+xml" href="/chatbot-app-console/static/favicon.svg">
+  <link rel="stylesheet" href="/chatbot-app-console/static/theme.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "LangGraph Agent — chatbot-app",
+    "description": "The three approval-gated agent tools in chatbot-app and the mandatory human-in-the-loop flow.",
+    "url": "https://konradxmalinowski.github.io/chatbot-app-console/docs/langgraph-agent/",
+    "isPartOf": { "@type": "WebSite", "name": "chatbot-app", "url": "https://konradxmalinowski.github.io/chatbot-app-console/" }
+  }
+  </script>
+</head>
+<body>
+
+<header class="site-topbar">
+  <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="topbar-brand" href="/chatbot-app-console/">chatbot-app</a>
+  <div class="topbar-nav" role="navigation" aria-label="Primary navigation">
+    <a href="/chatbot-app-console/">Home</a>
+    <a href="/chatbot-app-console/docs/" class="active" data-kw="overview introduction chatbot-app langchain langgraph what is">Docs</a>
+    <a href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+  <div class="topbar-right">
+    <div class="docs-search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="docs-search-input" type="text" placeholder="Search docs" aria-label="Search documentation">
+    </div>
+    <a class="topbar-action" href="https://github.com/konradxmalinowski/chatbot-app-console" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+  </div>
+</header>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div role="navigation" aria-label="Docs navigation">
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Overview</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/" data-kw="overview introduction chatbot-app langchain langgraph what is">Introduction</a></li>
+        <li><a href="/chatbot-app-console/docs/getting-started/" data-kw="install venv pip requirements env setup first run cli">Getting Started</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Configuration</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/configuration/" data-kw="llm provider gemini openai anthropic ollama env vars api key model">Configuration &amp; LLM Providers</a></li>
+        <li><a href="/chatbot-app-console/docs/rag-pipeline/" data-kw="rag retrieval chroma embeddings loader chunker docs citation source">RAG Pipeline</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">API &amp; Agent</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/rest-api/" data-kw="rest api fastapi jwt auth token chat session rate limit cors">REST API Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/langgraph-agent/" class="active" data-kw="langgraph agent tools web search calculator read doc approval human in the loop">LangGraph Agent</a></li>
+      </ul>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Reference</div>
+      <ul>
+        <li><a href="/chatbot-app-console/docs/cli-reference/" data-kw="cli flags rag agent llm provider model exit">CLI Reference</a></li>
+        <li><a href="/chatbot-app-console/docs/security/" data-kw="security jwt secret path traversal ast calculator prompt injection rate limit">Security</a></li>
+      </ul>
+    </div>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+    <div class="docs-eyebrow">API &amp; Agent</div>
+    <h1 class="docs-h1">LangGraph Agent</h1>
+    <p class="docs-lede"><code>--agent</code> (CLI) and <code>POST /agent</code> + approve/reject (API) run a LangGraph <code>StateGraph</code> with three tools, behind a <strong>mandatory</strong> human-in-the-loop gate: no tool ever executes without explicit approval, in either mode.</p>
+
+    <h2 id="tools">The three tools</h2>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <div class="card-title">web_search</div>
+        <div class="card-desc">Searches the web through DuckDuckGo — no API key required.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="12" x2="8.01" y2="12"/><line x1="12" y1="12" x2="12.01" y2="12"/><line x1="16" y1="12" x2="16.01" y2="12"/></svg></div>
+        <div class="card-title">calculator</div>
+        <div class="card-desc">Evaluates a restricted set of arithmetic expressions with an AST-based evaluator — no <code>eval</code> or <code>exec</code>.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="card-title">read_doc</div>
+        <div class="card-desc">Reads supported files only from <code>docs/</code> — path-confined, can't escape the corpus directory.</div>
+      </div>
+    </div>
+
+    <h2 id="graph">Graph &amp; approval gate</h2>
+    <p><code>agent/graph.py</code>'s <code>AgentGraph</code> compiles the graph with a <code>MemorySaver</code> checkpointer and <code>interrupt_before=["tools"]</code>: execution pauses right before a tool call would run. <code>session_id</code> doubles as the LangGraph <code>thread_id</code> — the same validated field used elsewhere, no new ID scheme.</p>
+
+    <h2 id="cli-flow">CLI flow</h2>
+    <p>Synchronous — when the graph pauses, it prints every proposed tool call (there can be more than one in a single turn, via parallel tool calling) and prompts once with <code>[y/N]</code>. Approval or rejection applies to the whole batch.</p>
+
+    <h2 id="api-flow">API flow</h2>
+    <p>Two-step, by explicit design choice — an auto-approve-via-header alternative was considered and rejected as weakening the safety gate.</p>
+    <ul>
+      <li><code>POST /agent</code> runs until it finishes or pauses. A pause returns <code>{"status": "pending_approval", "pending_id": &lt;session_id&gt;, "pending_tool_calls": [{"tool": str, "args": dict}, ...]}</code> — <strong>every</strong> pending call, not just one, so an approver can't unknowingly approve a call they never saw.</li>
+      <li><code>POST /agent/{pending_id}/approve</code> executes the batch and continues. Executed calls are logged to <code>logs/agent.jsonl</code> with a real result.</li>
+      <li><code>POST /agent/{pending_id}/reject</code> declines the whole batch instead — the agent must acknowledge it can't complete that step (enforced via <code>AGENT_SYSTEM_PROMPT_SUFFIX</code>), not silently retry.</li>
+    </ul>
+    <p>Neither approval route has a per-route rate-limit decorator, for the same ASGI-middleware reason as <code>/chat</code>/<code>/chat/rag</code> — see <a href="/chatbot-app-console/docs/rest-api/">REST API Reference</a>.</p>
+
+    <h2 id="calculator-safety">Calculator cost bound</h2>
+    <p><code>calculator</code>'s AST evaluator bounds <code>ast.Pow</code>'s cost before computing, not just the grammar it accepts: Python ints are arbitrary-precision, so an innocuous-looking <code>9**9**9</code> would otherwise pin a CPU core computing a ~369-million-digit number. <code>_check_pow_cost</code> estimates the result's bit-length via <code>log2</code> and rejects anything over <code>_MAX_POW_RESULT_BITS</code> before evaluating.</p>
+
+    <h2 id="logging">Audit log</h2>
+    <p>Every tool-call attempt — approved-and-executed, or rejected — is logged as one JSON line to <code>logs/agent.jsonl</code> (gitignored, like <code>sessions/</code>/<code>chroma_db/</code>): <code>{"timestamp", "session_id", "tool", "args", "result", "declined", "approved_by"}</code>. Tool results are truncated to 500 characters in the log only — the LLM/caller still receives the full result.</p>
+
+    <div class="docs-callout">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <div><strong>Known, accepted limitations</strong> — not bugs: <code>MemorySaver</code> is in-memory, so a pending approval is lost if the API process restarts before <code>/approve</code>/<code>/reject</code> is called. <code>verify_token</code> authenticates one shared service secret, not a per-user identity, so any valid token holder can approve or reject any session's pending call — identical to the pre-existing <code>/chat</code> <code>session_id</code> trust model, not new to this feature.</div>
+    </div>
+
+    <h2 id="next">Next steps</h2>
+    <ul>
+      <li>Run agent mode from the CLI — see <a href="/chatbot-app-console/docs/cli-reference/">CLI Reference</a>.</li>
+      <li>Understand the calculator and path-containment hardening in more depth — see <a href="/chatbot-app-console/docs/security/">Security</a>.</li>
+    </ul>
+  </main>
+</div>
+
+<script src="/chatbot-app-console/static/app.js"></script>
+</body>
+</html>
